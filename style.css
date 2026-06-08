@@ -1,0 +1,122 @@
+/* style.css */
+body { margin: 0; padding: 0; background: #050510; color: white; font-family: sans-serif; overflow: hidden; padding-bottom: 70px; }
+.bg-universe { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #1a0b2e 0%, #050510 100%); z-index: -1; }
+/* 星のきらめき風 */
+.bg-universe::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(white 1px, transparent 1px); background-size: 50px 50px; opacity: 0.1; }
+
+.header { display: flex; justify-content: space-between; padding: 15px 20px; background: rgba(0,0,0,0.8); border-bottom: 1px solid #ffd700; align-items: center; }
+.header-title { color: #ffd700; font-weight: 900; font-size: 16px; }
+.currency-display { font-weight: bold; color: #00d4ff; background: rgba(0,212,255,0.1); padding: 5px 10px; border-radius: 20px; border: 1px solid #00d4ff; }
+
+.main-container { height: calc(100vh - 130px); overflow-y: auto; padding: 20px; box-sizing: border-box; }
+.view { display: none; animation: fadeIn 0.3s; }
+.view.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ホーム画面 */
+.partner-container { text-align: center; margin-top: 20px; position: relative; }
+.partner-img { width: 200px; height: 200px; border-radius: 50%; border: 4px solid #ffd700; object-fit: cover; box-shadow: 0 0 30px rgba(255,215,0,0.5); background: #111; }
+.speech-bubble { background: rgba(255,255,255,0.9); color: #333; padding: 10px 20px; border-radius: 20px; display: inline-block; margin-top: 15px; font-weight: bold; position: relative; max-width: 80%; }
+.speech-bubble::before { content: ''; position: absolute; top: -10px; left: 50%; transform: translateX(-50%); border-width: 0 10px 10px 10px; border-style: solid; border-color: transparent transparent rgba(255,255,255,0.9) transparent; }
+
+.dashboard-stats { display: flex; justify-content: space-around; margin-top: 30px; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
+.stat-box { text-align: center; }
+.stat-label { font-size: 10px; color: #aaa; margin-bottom: 5px; font-weight: bold; }
+.stat-value { font-size: 20px; font-weight: 900; color: #ffd700; }
+.stat-sub { font-size: 10px; color: #888; mt-1 }
+
+/* 汎用パネル・フォーム */
+.panel { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; }
+.panel-title { margin: 0 0 15px 0; color: #ffd700; font-size: 16px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; font-size: 12px; color: #ffd700; margin-bottom: 5px; font-weight: bold; }
+.form-input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #444; background: #0a0a16; color: white; box-sizing: border-box; }
+.file-input { background: rgba(255,255,255,0.1); }
+
+/* ボタン類 */
+.btn { border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; text-align: center; transition: transform 0.1s; }
+.btn:active { transform: scale(0.95); }
+.btn-primary { background: #ffd700; color: black; }
+.btn-outline { background: transparent; color: #ffd700; border: 1px solid #ffd700; }
+.btn-share { background: #00d4ff; color: black; margin-left: 5px; }
+.btn-danger { background: rgba(255,68,68,0.2); color: #ff4444; border: 1px solid #ff4444; }
+.btn-gold { background: linear-gradient(135deg, #ffd700, #ff8c00); color: black; width: 100%; margin-top: 10px; }
+.w-full { width: 100%; }
+.button-group { display: flex; gap: 10px; margin-top: 10px; }
+.button-group .btn { flex: 1; font-size: 12px; padding: 10px; }
+
+/* ガチャ画面 */
+.gacha-banner { text-align: center; margin-bottom: 20px; }
+.gacha-pickup-text { color: #ff00cc; font-weight: 900; font-size: 20px; text-shadow: 0 0 10px #ff00cc; animation: pulse 1.5s infinite; }
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+.gacha-results { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; min-height: 260px; padding-bottom: 20px; }
+.idle-message { margin-top: 100px; color: #666; font-weight: bold; }
+
+/* カードデザイン (9段階レアリティ) */
+.card { width: 75px; height: 110px; border-radius: 8px; overflow: hidden; background: #111; animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; }
+@keyframes pop { from { transform: scale(0.5) translateY(50px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+.card img { width: 100%; height: 100%; object-fit: cover; }
+.card-rarity-tag { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.7); text-align: center; font-size: 10px; font-weight: black; padding: 2px 0; }
+
+.SLR { border: 3px solid #ffffff; box-shadow: 0 0 20px #ffffff, inset 0 0 15px #ffffff; }
+.LR { border: 3px solid #ff4444; box-shadow: 0 0 15px #ff4444; }
+.LE { border: 2px solid #ff8c00; box-shadow: 0 0 10px #ff8c00; }
+.UR { border: 2px solid #ffd700; box-shadow: 0 0 10px #ffd700; }
+.SSR { border: 2px solid #ff00cc; box-shadow: 0 0 8px #ff00cc; }
+.SR { border: 2px solid #00d4ff; box-shadow: 0 0 5px #00d4ff; }
+.R { border: 2px solid #32cd32; }
+.N { border: 1px solid #aaa; }
+.C { border: 1px solid #555; filter: grayscale(30%); }
+
+.SLR .card-rarity-tag { color: #ffffff; text-shadow: 0 0 5px #fff; }
+.LR .card-rarity-tag { color: #ff4444; }
+.LE .card-rarity-tag { color: #ff8c00; }
+.UR .card-rarity-tag { color: #ffd700; }
+.SSR .card-rarity-tag { color: #ff00cc; }
+.SR .card-rarity-tag { color: #00d4ff; }
+
+/* 100枚被りの青ラメ進化エフェクト */
+.blue-star-evolved {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
+    background-image: radial-gradient(#00d4ff 1px, transparent 1px);
+    background-size: 10px 10px; opacity: 0.6; mix-blend-mode: color-dodge;
+    animation: sparkleMove 3s linear infinite;
+    box-shadow: inset 0 0 20px #00d4ff;
+}
+@keyframes sparkleMove { from { background-position: 0 0; } to { background-position: 20px 20px; } }
+
+/* ガチャボタン */
+.gacha-controls { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+.btn-gacha { flex: 1; background: #eee; color: black; padding: 15px; border-radius: 30px; font-size: 14px; }
+.btn-gacha-10 { flex: 2; background: linear-gradient(135deg, #ff00cc, #7b2ff7); color: white; padding: 15px; border-radius: 30px; font-size: 16px; box-shadow: 0 4px 15px rgba(255,0,204,0.4); }
+.ticket-controls { margin-top: 15px; text-align: center; }
+.btn-gacha-ticket { background: linear-gradient(135deg, #ffd700, #ff4444); color: white; padding: 12px 30px; border-radius: 20px; font-size: 14px; width: 80%; box-shadow: 0 0 15px rgba(255,215,0,0.5); animation: pulse 2s infinite; }
+
+/* 図鑑画面 */
+.collection-header { margin-bottom: 15px; }
+.collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 8px; padding-bottom: 40px; }
+.item-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0,0,0,0.5); color: #444; font-size: 10px; font-weight: bold; border: 1px dashed #333; border-radius: 8px; }
+
+/* モーダル */
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 3000; }
+.hidden { display: none !important; }
+.modal-content { background: #1a1a2e; padding: 25px; border-radius: 20px; text-align: center; max-width: 85%; width: 300px; border: 1px solid #ffd700; position: relative; }
+.modal-img-wrapper { position: relative; display: inline-block; margin: 15px 0; }
+#modal-card-img { width: 160px; height: 230px; object-fit: cover; border-radius: 12px; }
+.modal-rarity { font-size: 24px; font-weight: 900; }
+.modal-name { color: #fff; font-size: 18px; margin: 0 0 5px 0; }
+.modal-copies { font-size: 12px; color: #00d4ff; font-weight: bold; margin-bottom: 10px; }
+.modal-desc { font-size: 12px; color: #ccc; margin-bottom: 20px; line-height: 1.4; }
+.modal-actions { display: flex; flex-direction: column; gap: 10px; }
+.btn-close { background: #444; color: white; }
+
+/* ログインボーナスパネル */
+#login-bonus-panel { background: rgba(255,215,0,0.1); border: 2px solid #ffd700; padding: 20px; border-radius: 15px; text-align: center; margin-top: 20px; animation: pop 0.5s; }
+.logbo-title { color: #ffd700; font-weight: 900; font-size: 18px; margin-bottom: 10px; }
+
+/* 下部ナビゲーション */
+.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: #000; border-top: 1px solid #333; display: flex; z-index: 200; }
+.nav-btn { flex: 1; background: none; border: none; color: #555; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.nav-btn .icon { font-size: 20px; margin-bottom: 2px; }
+.nav-btn .label { font-size: 10px; font-weight: bold; }
+.nav-btn.active { color: #ffd700; border-top: 2px solid #ffd700; background: rgba(255,255,255,0.05); }

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>MY GACHA MAKER</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- 豪華な紙吹雪エフェクト用ライブラリ -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+    <!-- 宇宙のようなキラキラ背景 -->
+    <div class="bg-universe" id="main-bg"></div>
+
+    <!-- ヘッダー（上部メニュー） -->
+    <header class="header">
+        <div class="header-title" id="current-gacha-title">ガチャメーカー</div>
+        <div class="header-status">
+            <span class="currency-display" id="header-stones">💎 0</span>
+        </div>
+    </header>
+
+    <!-- メイン画面の切り替えエリア -->
+    <main class="main-container">
+
+        <!-- 🏠 1. ホーム画面 -->
+        <section id="view-home" class="view active">
+            <div class="partner-container">
+                <img id="home-partner-img" src="" alt="相棒" class="partner-img">
+                <div class="speech-bubble" id="home-message">今日も一緒にがんばろう！</div>
+            </div>
+            
+            <div class="dashboard-stats">
+                <div class="stat-box">
+                    <div class="stat-label">コンプ率</div>
+                    <div class="stat-value"><span id="comp-percent">0</span>%</div>
+                    <div class="stat-sub" id="comp-fraction">0 / 0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">通算ログイン</div>
+                    <div class="stat-value"><span id="login-days">0</span>日</div>
+                    <div class="stat-sub">毎日リセット</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">消費した石</div>
+                    <div class="stat-value" id="total-spent-stones">0</div>
+                    <div class="stat-sub">💎</div>
+                </div>
+            </div>
+            <!-- ログインボーナス獲得時の演出用パネル -->
+            <div id="login-bonus-panel" class="hidden"></div>
+        </section>
+
+        <!-- ⚙️ 2. ガチャを作る・管理する画面 -->
+        <section id="view-admin" class="view">
+            <div class="panel">
+                <h2 class="panel-title">📦 ガチャの切り替え・新規作成</h2>
+                <select id="gacha-selector" class="form-input"></select>
+                <div class="button-group">
+                    <button id="btn-create-new-gacha" class="btn btn-outline">＋ 新しいガチャを作る</button>
+                    <button id="btn-share-gacha" class="btn btn-share">🔗 このガチャを友達に送る</button>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2 class="panel-title">🖼️ 推しカードの実装（追加）</h2>
+                <div class="form-group">
+                    <label>スマホの画像を選ぶ</label>
+                    <input type="file" id="input-card-img" accept="image/*" class="form-input file-input">
+                </div>
+                <div class="form-group">
+                    <label>カードの名前</label>
+                    <input type="text" id="input-card-name" placeholder="例: おねむりシナモン" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label>レアリティ (全9段階)</label>
+                    <select id="input-card-rarity" class="form-input">
+                        <option value="SLR">SLR (シークレットレジェンドレア: 0.01%)</option>
+                        <option value="LR">LR (レジェンドレア: 0.04%)</option>
+                        <option value="LE">LE (レジェンドエディション: 0.15%)</option>
+                        <option value="UR">UR (ウルトラレア: 0.5%)</option>
+                        <option value="SSR">SSR (スペシャルスーパーレア: 3.8%)</option>
+                        <option value="SR">SR (スーパーレア: 10.5%)</option>
+                        <option value="R">R (レア: 20%)</option>
+                        <option value="N" selected>N (ノーマル: 50%)</option>
+                        <option value="C">C (コモン/ネタ枠: 15%)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>セリフ・説明文（空欄OK）</label>
+                    <input type="text" id="input-card-desc" placeholder="排出時のセリフを入力" class="form-input">
+                </div>
+                <button id="btn-add-card" class="btn btn-primary w-full">ガチャに実装する！</button>
+            </div>
+            
+            <div class="panel danger-zone">
+                <button id="btn-reset-all" class="btn btn-danger w-full">🗑️ アプリの全データをリセット</button>
+            </div>
+        </section>
+
+        <!-- 🎰 3. ガチャを引く画面 -->
+        <section id="view-gacha" class="view">
+            <div class="gacha-banner">
+                <div class="gacha-pickup-text">最高レアを引き当てろ！</div>
+            </div>
+            
+            <div id="gacha-result-container" class="gacha-results">
+                <div class="idle-message">✨ 奇跡を求めて ✨</div>
+            </div>
+            
+            <div class="gacha-controls">
+                <button id="btn-pull-1" class="btn btn-gacha">単発 (💎30)</button>
+                <button id="btn-pull-10" class="btn btn-gacha-10">10連 (💎300)</button>
+            </div>
+            <div class="ticket-controls">
+                <button id="btn-pull-ticket" class="btn btn-gacha-ticket hidden">🎫 確定チケットで引く！</button>
+            </div>
+        </section>
+
+        <!-- 📖 4. 図鑑 (ミュージアム) 画面 -->
+        <section id="view-collection" class="view">
+            <div class="collection-header">
+                <select id="collection-gacha-selector" class="form-input"></select>
+                <button id="btn-hall-of-fame" class="btn btn-gold hidden">🏆 コンプリート！殿堂入りさせる</button>
+            </div>
+            <div id="collection-grid" class="collection-grid">
+                <!-- 獲得したカードがここに並びます -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- 🌟 カード詳細表示用ポップアップ（モーダル） -->
+    <div id="modal-card-detail" class="modal hidden">
+        <div class="modal-content">
+            <div id="modal-card-rarity" class="modal-rarity"></div>
+            <div class="modal-img-wrapper">
+                <img id="modal-card-img" src="" alt="Card">
+                <div id="modal-card-stars" class="modal-stars"></div> <!-- 100枚被りの青ラメ星 -->
+            </div>
+            <h2 id="modal-card-name" class="modal-name"></h2>
+            <div class="modal-copies">所持数: <span id="modal-card-count">0</span>枚</div>
+            <p id="modal-card-desc" class="modal-desc"></p>
+            
+            <div class="modal-actions">
+                <button id="btn-set-partner" class="btn btn-outline">🏠 ホームの相棒にする</button>
+                <button id="btn-close-modal" class="btn btn-close">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 🎁 URLからガチャを受け取った時のポップアップ -->
+    <div id="modal-import" class="modal hidden">
+        <div class="modal-content">
+            <h2>🎁 ガチャが届きました！</h2>
+            <p>お友達から新しいガチャデータを受け取りました。あなたのアプリに追加しますか？</p>
+            <div class="modal-actions">
+                <button id="btn-import-yes" class="btn btn-primary">インポートする！</button>
+                <button id="btn-import-no" class="btn btn-outline">やめる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 📱 下部ナビゲーションメニュー -->
+    <nav class="bottom-nav">
+        <button class="nav-btn active" data-target="view-home"><span class="icon">🏠</span><br><span class="label">ホーム</span></button>
+        <button class="nav-btn" data-target="view-admin"><span class="icon">⚙️</span><br><span class="label">作る</span></button>
+        <button class="nav-btn" data-target="view-gacha"><span class="icon">🎰</span><br><span class="label">ガチャ</span></button>
+        <button class="nav-btn" data-target="view-collection"><span class="icon">📖</span><br><span class="label">図鑑</span></button>
+    </nav>
+
+    <!-- アプリを動かす魔法のスクリプト -->
+    <script src="app.js"></script>
+</body>
+</html>
