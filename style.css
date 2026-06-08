@@ -1,4 +1,30 @@
 /* ==========================================================================
+   🎨 ユーザーカスタムカラーの初期値（CSS変数）
+   ========================================================================== */
+:root {
+    /* 🤍 スタイリッシュ初期値 */
+    --stylish-bg: radial-gradient(circle at 20% 20%, #e2e8f0 0%, #cbd5e1 100%);
+    --stylish-text: #1d1d1f;
+    --stylish-primary: #1d1d1f;
+
+    /* 🌸 キュート初期値 */
+    --cute-bg: linear-gradient(135deg, #ffe3e3 0%, #fff0f5 100%);
+    --cute-text: #4a3737;
+    --cute-primary: linear-gradient(135deg, #ffb3c1, #ffccd5);
+
+    /* 🎮 ゲーミング初期値 */
+    --gaming-bg: radial-gradient(circle at center, #0f0c1b 0%, #050508 100%);
+    --gaming-text: #00ffcc;
+    --gaming-primary: #00ffcc;
+
+    /* ✨ マグネットグリッター初期値 */
+    --glitter-bg: linear-gradient(135deg, #0f0526 0%, #03010a 60%, #0c1a24 100%);
+    --glitter-text: #ffffff;
+    --glitter-primary: linear-gradient(135deg, #8a2be2, #4a00e0);
+    --glitter-reflect: rgba(0, 220, 255, 0.4); /* マグネットの光の筋の色 */
+}
+
+/* ==========================================================================
    🌐 共通の土台・レイアウト設定
    ========================================================================== */
 body {
@@ -9,18 +35,16 @@ body {
     padding-bottom: 80px;
     height: 100vh;
     box-sizing: border-box;
-    transition: color 0.3s ease;
+    transition: color 0.3s ease, background 0.3s ease;
 }
 
-/* 背景を彩るレイヤー */
 .bg-layer {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -2; /* 他の要素の完全に裏側に配置 */
-    transition: background 0.5s ease;
+    z-index: -2;
     overflow: hidden;
 }
 
@@ -44,11 +68,7 @@ body {
     border-bottom: 1px solid rgba(255,255,255,0.1);
     z-index: 100;
 }
-.header-title { font-weight: 900; font-size: 15px; tracking: wide; opacity: 0.8; }
-.header-main { display: flex; flex-direction: column; }
-.header-label { font-size: 10px; opacity: 0.6; font-weight: bold; margin-bottom: 2px; }
-.header-money { font-weight: 900; font-size: 24px; cursor: pointer; transition: opacity 0.2s; }
-
+.header-title { font-weight: 900; font-size: 18px; tracking: wide; }
 .main-container {
     height: calc(100vh - 140px);
     overflow-y: auto;
@@ -56,162 +76,165 @@ body {
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch;
     position: relative;
-    z-index: 10; /* 背景より手前に配置してボタン等のタップを邪魔させない */
+    z-index: 10;
 }
 
 /* ==========================================================================
-   🎨 4大テーマのデザイン定義
+   🎨 各テーマのデザイン定義（カスタムカラー変数連動）
    ========================================================================== */
 
-/* 🤍 1. スタイリッシュテーマ (すりガラス透明感) */
-.theme-stylish { background: #f4f5f7; color: #1d1d1f; }
-.theme-stylish .bg-layer { background: radial-gradient(circle at 20% 20%, #e2e8f0 0%, #cbd5e1 100%); }
-.theme-stylish .panel, .theme-stylish .header, .theme-stylish .dashboard-stats, .theme-stylish .modal-content, .theme-stylish .bento-card, .theme-stylish .asset-display-panel, .theme-stylish .simulator-hero-banner {
-    background: rgba(255, 255, 255, 0.45);
+/* 🤍 1. スタイリッシュテーマ */
+.theme-stylish { background: #f4f5f7; color: var(--stylish-text); }
+.theme-stylish .bg-layer { background: var(--stylish-bg); }
+.theme-stylish .panel, .theme-stylish .header, .theme-stylish .dashboard-stats, .theme-stylish .modal-content {
+    background: rgba(255, 255, 255, 0.4);
     backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.5);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.04);
 }
-.theme-stylish .btn-primary { background: #1d1d1f; color: #ffffff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-.theme-stylish .btn-outline { border: 1px solid #1d1d1f; color: #1d1d1f; background: transparent; }
-.theme-stylish .currency-display { background: rgba(0,0,0,0.05); color: #1d1d1f; border: 1px solid rgba(0,0,0,0.1); }
-.theme-stylish .btn-circle { background: rgba(0,0,0,0.05); color: #1d1d1f; }
-.theme-stylish .btn-eat { background: #a2d2ff; color: white; }
-.theme-stylish .chart-bar-p { background: #2d6a4f; }
-.theme-stylish .chart-bar-e { background: #74c69d; }
+.theme-stylish .btn-primary { background: var(--stylish-primary); color: #ffffff; }
+.theme-stylish .btn-outline { border: 1px solid var(--stylish-text); color: var(--stylish-text); background: transparent; }
+.theme-stylish .currency-display { background: rgba(0,0,0,0.05); color: var(--stylish-text); border: 1px solid rgba(0,0,0,0.1); }
 
-/* 🌸 2. ポップ＆キュートテーマ (パステルふんわり) */
-.theme-cute { background: #fff5f5; color: #4a3737; }
-.theme-cute .bg-layer { background: linear-gradient(135deg, #ffe3e3 0%, #fff0f5 100%); }
-.theme-cute .panel, .theme-cute .header, .theme-cute .dashboard-stats, .theme-cute .modal-content, .theme-cute .bento-card, .theme-cute .asset-display-panel, .theme-cute .simulator-hero-banner {
+/* 🌸 2. ポップ＆キュートテーマ */
+.theme-cute { background: #fff5f5; color: var(--cute-text); }
+.theme-cute .bg-layer { background: var(--cute-bg); }
+.theme-cute .panel, .theme-cute .header, .theme-cute .dashboard-stats, .theme-cute .modal-content {
     background: rgba(255, 255, 255, 0.85);
     border-radius: 24px !important;
     border: 3px solid #ffccd5;
     box-shadow: 0 6px 0 #ffb3c1;
 }
 .theme-cute .btn { border-radius: 20px !important; }
-.theme-cute .btn-primary { background: linear-gradient(135deg, #ffb3c1, #ffccd5); color: #4a3737; box-shadow: 0 4px 0 #ff85a1; font-weight: bold; }
-.theme-cute .btn-outline { border: 2px solid #ffb3c1; color: #ff85a1; background: #ffffff; box-shadow: 0 3px 0 #ffccd5; }
-.theme-cute .currency-display { background: #fff0f5; color: #ff758f; border: 2px solid #ffccd5; border-radius: 12px; }
-.theme-cute .btn-circle { background: #ffe3e3; color: #ff758f; }
-.theme-cute .btn-eat { background: #ff758f; color: white; box-shadow: 0 3px 0 #ff477e; }
-.theme-cute .chart-bar-p { background: #43b35d; border-radius: 8px 8px 0 0; }
-.theme-cute .chart-bar-e { background: #a2ffa2; border-radius: 8px 8px 0 0; }
+.theme-cute .btn-primary { background: var(--cute-primary); color: var(--cute-text); box-shadow: 0 4px 0 #ff85a1; font-weight: bold; }
+.theme-cute .btn-outline { border: 2px solid #ffccd5; color: #ff85a1; background: #ffffff; box-shadow: 0 3px 0 #ffccd5; }
+.theme-cute .currency-display { background: #fff0f5; color: #ff758f; border: 2px solid #ffccd5; border-radius: 15px; }
 
-/* 🎮 3. ゲーミングテーマ (ダーク＆ネオン発光) */
-.theme-gaming { background: #07070c; color: #00ffcc; }
-.theme-gaming .bg-layer { background: radial-gradient(circle at center, #0f0c1b 0%, #050508 100%); background-image: radial-gradient(rgba(0,255,204,0.1) 1px, transparent 1px); background-size: 20px 20px; }
-.theme-gaming .panel, .theme-gaming .header, .theme-gaming .dashboard-stats, .theme-gaming .modal-content, .theme-gaming .bento-card, .theme-gaming .asset-display-panel, .theme-gaming .simulator-hero-banner {
+/* 🎮 3. ゲーミングテーマ */
+.theme-gaming { background: #07070c; color: var(--gaming-text); }
+.theme-gaming .bg-layer { background: var(--gaming-bg); background-image: radial-gradient(rgba(0,255,204,0.1) 1px, transparent 1px); background-size: 20px 20px; }
+.theme-gaming .panel, .theme-gaming .header, .theme-gaming .dashboard-stats, .theme-gaming .modal-content {
     background: rgba(10, 10, 20, 0.8);
-    border: 1px solid #00ffcc;
-    box-shadow: 0 0 15px rgba(0,255,204,0.3), inset 0 0 10px rgba(0,255,204,0.1);
+    border: 1px solid var(--gaming-text);
+    box-shadow: 0 0 15px rgba(0,255,204,0.3);
 }
-.theme-gaming .btn-primary { background: #00ffcc; color: #000000; font-weight: 900; box-shadow: 0 0 15px #00ffcc; }
-.theme-gaming .btn-outline { border: 1px solid #ff00cc; color: #ff00cc; background: transparent; box-shadow: 0 0 10px rgba(255,0,204,0.2); }
-.theme-gaming .currency-display { background: rgba(0,255,204,0.1); color: #00ffcc; border: 1px solid #00ffcc; text-shadow: 0 0 5px #00ffcc; }
-.theme-gaming .btn-circle { background: rgba(0,255,204,0.1); color: #00ffcc; border: 1px solid #00ffcc; }
-.theme-gaming .btn-eat { background: #ff0055; color: white; box-shadow: 0 0 10px #ff0055; font-weight: 900; }
-.theme-gaming .chart-bar-p { background: #ffaa00; }
-.theme-gaming .chart-bar-e { background: #ffd700; box-shadow: 0 0 8px #ffd700; }
+.theme-gaming .header-title { text-shadow: 0 0 8px var(--gaming-text); }
+.theme-gaming .btn-primary { background: var(--gaming-primary); color: #000000; font-weight: 900; box-shadow: 0 0 15px var(--gaming-primary); }
+.theme-gaming .btn-outline { border: 1px solid #ff00cc; color: #ff00cc; background: transparent; }
+.theme-gaming .currency-display { background: rgba(0,255,204,0.1); color: var(--gaming-text); border: 1px solid var(--gaming-text); }
 
-/* ✨ 4. マグネットグリッターテーマ (天の川満天の星空・超軽量ぬるぬるアニメ搭載版) */
-.theme-glitter { background: #050212; color: #ffffff; }
-.theme-glitter .bg-layer {
-    background: linear-gradient(135deg, #0e0524 0%, #030108 50%, #091520 100%);
-    z-index: -2;
-}
+/* ✨ 4. マグネットグリッターテーマ（超ギラギラ・ネイル反射仕様） */
+.theme-glitter { background: #060214; color: var(--glitter-text); }
+.theme-glitter .bg-layer { background: var(--glitter-bg); }
 
-/* 💅 負荷ほぼゼロで極上のきらめきと光のうねりを表現する特殊グリッターレイヤー */
+/* 💅 3D処理でスマホへの負荷を「ゼロ」に抑えたまま、キャッツアイの鋭い光がうねるレイヤー */
 .theme-glitter .glitter-shine {
     display: block !important;
     position: absolute;
-    top: -50%; left: -50%; width: 200%; height: 200%;
-    /* 重ね合わせた3重の星屑グラデーション */
+    top: -60%; left: -60%; width: 220%; height: 220%;
+    /* 爪のマグネット粒子のような「鋭い斜めの光の筋（グラデーション）」と満天のラメを合成 */
     background-image: 
-        radial-gradient(circle at 30% 20%, rgba(255,255,255,0.2) 1px, transparent 1px),
-        radial-gradient(circle at 70% 60%, rgba(0,220,255,0.15) 2px, transparent 2px),
-        radial-gradient(circle at 50% 50%, rgba(138,43,226,0.2) 3px, transparent 4px),
-        linear-gradient(45deg, transparent, rgba(255,255,255,0.05) 40%, rgba(0,220,255,0.08) 50%, transparent 60%);
-    background-size: 40px 40px, 60px 60px, 80px 80px, 100% 100%;
+        radial-gradient(circle at 20% 30%, rgba(255,255,255,0.4) 1px, transparent 2px),
+        radial-gradient(circle at 70% 40%, rgba(255,255,255,0.3) 2px, transparent 3px),
+        radial-gradient(circle at 40% 80%, rgba(255,255,255,0.2) 1.5px, transparent 2px),
+        linear-gradient(115deg, transparent 35%, var(--glitter-reflect) 48%, rgba(255,255,255,0.6) 50%, var(--glitter-reflect) 52%, transparent 65%);
+    background-size: 50px 50px, 70px 70px, 90px 90px, 100% 100%;
     
-    /* 3Dアクセラレーションを強制し、スマホの脳みそを一切疲れさせない極意 */
     transform: translate3d(0, 0, 0) rotate(-15deg);
     will-change: transform;
-    animation: trueMagnetShimmer 20s ease-in-out infinite alternate;
+    animation: sharpMagnetShimmer 7s ease-in-out infinite alternate;
     z-index: -1;
     pointer-events: none;
 }
-/* 天の川が静かに、奥深くうねるように光を反射するモーション */
-@keyframes trueMagnetShimmer {
-    0% { transform: translate3d(-5%, -5%, 0) rotate(-15deg) scale(0.95); filter: brightness(0.9); }
-    100% { transform: translate3d(5%, 5%, 0) rotate(-10deg) scale(1.05); filter: brightness(1.15); }
+@keyframes sharpMagnetShimmer {
+    0% { transform: translate3d(-4%, -4%, 0) rotate(-18deg) scale(0.95); filter: brightness(0.85) contrast(1.2); }
+    100% { transform: translate3d(4%, 4%, 0) rotate(-12deg) scale(1.05); filter: brightness(1.3) contrast(1.5); }
 }
 
-.theme-glitter .panel, .theme-glitter .header, .theme-glitter .dashboard-stats, .theme-glitter .modal-content, .theme-glitter .bento-card, .theme-glitter .asset-display-panel, .theme-glitter .simulator-hero-banner {
-    background: rgba(255, 255, 255, 0.04);
+.theme-glitter .panel, .theme-glitter .header, .theme-glitter .dashboard-stats, .theme-glitter .modal-content {
+    background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px);
     border: 1px solid rgba(255, 255, 255, 0.12);
     box-shadow: inset 0 1px 1px rgba(255,255,255,0.1), 0 12px 40px rgba(0,0,0,0.5);
 }
 .theme-glitter .btn-primary {
-    background: linear-gradient(135deg, #8a2be2, #4a00e0); color: white;
+    background: var(--glitter-primary); color: white;
     box-shadow: 0 4px 15px rgba(138,43,226,0.4);
 }
-.theme-glitter .btn-outline { border: 1px solid rgba(255,255,255,0.3); color: #ffffff; background: rgba(255,255,255,0.05); }
+.theme-glitter .btn-outline { border: 1px solid rgba(255,255,255,0.3); color: var(--glitter-text); background: rgba(255,255,255,0.05); }
 .theme-glitter .currency-display { background: rgba(0,191,255,0.15); color: #00d4ff; border: 1px solid rgba(0,212,255,0.3); }
-.theme-glitter .btn-circle { background: rgba(255,255,255,0.1); color: white; }
-.theme-glitter .btn-eat { background: linear-gradient(135deg, #00ced1, #008b8b); color: white; }
-.theme-glitter .chart-bar-p { background: #8b6508; }
-.theme-glitter .chart-bar-e { background: #d4af37; }
 
 /* ==========================================================================
-   🏠 アプリ共通UIコンポーネント
+   🏠 ホーム画面＆UI部品
    ========================================================================== */
 .panel { padding: 20px; border-radius: 16px; margin-bottom: 20px; box-sizing: border-box; }
 .panel-title { margin: 0 0 15px 0; font-size: 15px; font-weight: bold; opacity: 0.9; }
 
-.form-group { margin-bottom: 15px; }
-.form-group label, .form-sub-label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 6px; opacity: 0.8; }
-.form-row { display: flex; gap: 10px; }
-.flex-1 { flex: 1; }
-.form-input {
-    width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1);
-    background: rgba(255,255,255,0.6); color: inherit; font-weight: bold;
-    box-sizing: border-box; font-size: 14px; transition: all 0.2s;
-}
-.theme-gaming .form-input, .theme-glitter .form-input {
-    background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2);
-}
-.form-input:focus { outline: none; border-color: currentColor; }
-.file-input { padding: 8px; }
+/* ⚙️ 今回追加のカラーピッカー用レイアウトスタイル */
+.color-picker-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.color-picker-row { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.04); padding: 8px 12px; border-radius: 10px; font-weight: bold; font-size: 13px; }
+.theme-gaming .color-picker-row, .theme-glitter .color-picker-row { background: rgba(255,255,255,0.05); }
+.color-picker-row input[type="color"] { border: none; width: 40px; height: 30px; border-radius: 6px; cursor: pointer; background: transparent; }
 
-.btn { border: none; padding: 14px; border-radius: 12px; font-weight: 800; cursor: pointer; text-align: center; font-size: 14px; transition: transform 0.1s; user-select: none; }
-.btn:active { transform: scale(0.95); }
-.w-full { width: 100%; }
-.button-group { display: flex; gap: 10px; margin-top: 10px; }
-.button-group .btn { flex: 1; padding: 10px; font-size: 12px; }
-.btn-share { background: #00d4ff; color: #000; font-weight: bold; }
-.btn-text-danger { background: transparent; border: none; color: #ff4444; font-weight: bold; font-size: 11px; text-decoration: underline; cursor: pointer; }
-
-/* 🎰 ガチャ固有パーツ */
 .partner-container { text-align: center; margin: 25px 0; position: relative; }
 .partner-wrapper { display: inline-block; position: relative; width: 170px; height: 170px; }
-.partner-img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; border: 4px solid #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.15); background: #e2e8f0; cursor: pointer; }
-.speech-bubble { background: #ffffff; color: #333333; padding: 12px 20px; border-radius: 20px; display: inline-block; margin-top: 15px; font-weight: bold; font-size: 13px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); max-width: 80%; animation: bubbleFloat 3s ease-in-out infinite alternate; position: relative; cursor: pointer; }
-.speech-bubble::before { content: ''; position: absolute; top: -8px; left: 50%; transform: translateX(-50%); border-width: 0 8px 8px 8px; border-style: solid; border-color: transparent transparent #ffffff transparent; }
+.partner-img {
+    width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
+    border: 4px solid #ffffff; box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    background: #e2e8f0; cursor: pointer; transition: transform 0.2s;
+}
+.partner-img:active { transform: scale(0.96); }
+
+.speech-bubble {
+    background: #ffffff; color: #333333; padding: 12px 20px; border-radius: 20px;
+    display: inline-block; margin-top: 15px; font-weight: bold; font-size: 13px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08); max-width: 80%;
+    animation: bubbleFloat 3s ease-in-out infinite alternate;
+    cursor: pointer; position: relative;
+}
+.speech-bubble::before {
+    content: ''; position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+    border-width: 0 8px 8px 8px; border-style: solid; border-color: transparent transparent #ffffff transparent;
+}
+@keyframes bubbleFloat { from { transform: translateY(0); } to { transform: translateY(-5px); } }
+
 .dashboard-stats { display: flex; justify-content: space-around; padding: 15px 10px; border-radius: 16px; }
 .stat-box { text-align: center; flex: 1; }
 .stat-label { font-size: 10px; opacity: 0.6; margin-bottom: 4px; font-weight: bold; }
 .stat-value { font-size: 18px; font-weight: 900; }
 .stat-sub { font-size: 10px; opacity: 0.5; margin-top: 2px; }
+
+#login-bonus-panel {
+    background: rgba(255, 215, 0, 0.12); border: 2px dashed #ffd700;
+    padding: 15px; border-radius: 16px; text-align: center; margin-top: 20px;
+    color: #ffaa00; font-weight: bold; animation: popEffect 0.4s ease;
+}
+
+/* ==========================================================================
+   🎰 ガチャ画面 & レアリティ枠
+   ========================================================================== */
 .gacha-banner { text-align: center; margin-bottom: 20px; }
 .gacha-pickup-text { font-weight: 900; font-size: 18px; }
+
 .gacha-results { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; min-height: 250px; padding: 10px 0; }
 .idle-message { margin-top: 100px; opacity: 0.4; font-weight: bold; font-size: 14px; }
-.card { width: 74px; height: 106px; border-radius: 10px; overflow: hidden; background: #222; animation: cardPopIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; position: relative; box-sizing: border-box; cursor: pointer; }
+
+.card {
+    width: 74px; height: 106px; border-radius: 10px; overflow: hidden;
+    background: #222; animation: cardPopIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    position: relative; box-sizing: border-box; cursor: pointer;
+}
 .card img { width: 100%; height: 100%; object-fit: cover; }
-.card-rarity-tag { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.75); text-align: center; font-size: 9px; font-weight: 900; padding: 3px 0; }
-.SLR { border: 3px solid #ffffff; box-shadow: 0 0 20px #fff, inset 0 0 10px #fff; }
+.card-rarity-tag {
+    position: absolute; bottom: 0; left: 0; width: 100%;
+    background: rgba(0,0,0,0.75); text-align: center;
+    font-size: 9px; font-weight: 900; padding: 3px 0; letter-spacing: 0.5px;
+}
+@keyframes cardPopIn {
+    from { transform: scale(0.4) translateY(30px); opacity: 0; }
+    to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.SLR { border: 3px solid #ffffff; box-shadow: 0 0 20px #fff, inset 0 0 10px #fff; animation: slrGlow 2s infinite alternate; }
 .LR  { border: 3px solid #ff3333; box-shadow: 0 0 15px #ff3333; }
 .LE  { border: 2px solid #ff8c00; box-shadow: 0 0 10px #ff8c00; }
 .UR  { border: 2px solid #ffd700; box-shadow: 0 0 10px #ffd700; }
@@ -220,73 +243,73 @@ body {
 .R   { border: 2px solid #32cd32; }
 .N   { border: 1px solid rgba(255,255,255,0.4); }
 .C   { border: 1px solid #555; filter: grayscale(40%); }
+
+.SLR .card-rarity-tag { color: #fff; text-shadow: 0 0 4px #fff; }
+.LR .card-rarity-tag  { color: #ff3333; }
+.LE .card-rarity-tag  { color: #ff8c00; }
+.UR .card-rarity-tag  { color: #ffd700; }
+.SSR .card-rarity-tag { color: #ff00cc; }
+.SR .card-rarity-tag  { color: #00d4ff; }
+
+@keyframes slrGlow {
+    0% { box-shadow: 0 0 10px #fff, inset 0 0 5px #fff; }
+    100% { box-shadow: 0 0 22px #fff, inset 0 0 12px #fff; filter: brightness(1.1); }
+}
+
+.blue-star-evolved {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
+    background-image: radial-gradient(#00d4ff 1px, transparent 1px);
+    background-size: 8px 8px; opacity: 0.65; mix-blend-mode: screen;
+    box-shadow: inset 0 0 15px #00d4ff;
+    animation: blueGlitterScroll 4s linear infinite;
+}
+@keyframes blueGlitterScroll {
+    from { background-position: 0 0; filter: hue-rotate(0deg); }
+    to { background-position: 16px 32px; filter: hue-rotate(20deg); }
+}
+
 .btn-gacha { background: #e2e8f0; color: #333; padding: 16px; border-radius: 30px; font-size: 14px; font-weight: bold; width: 48%; }
-.btn-gacha-10 { background: linear-gradient(135deg, #ff00cc, #7b2ff7); color: white; padding: 16px; border-radius: 30px; font-size: 16px; font-weight: 900; box-shadow: 0 6px 20px rgba(255,0,204,0.3); width: 48%; }
+.btn-gacha-10 {
+    background: linear-gradient(135deg, #ff00cc, #7b2ff7); color: white;
+    padding: 16px; border-radius: 30px; font-size: 16px; font-weight: 900;
+    box-shadow: 0 6px 20px rgba(255,0,204,0.3); width: 48%;
+}
 .gacha-controls { display: flex; justify-content: space-between; }
-.ticket-controls { display: flex; flex-direction: column; align-items: center; gap: 5px; margin-top: 10px; }
-.collection-header { margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px; }
-.collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 10px; padding-bottom: 30px; }
-.btn-gold { background: linear-gradient(135deg, #ffd700, #ff8c00); color: black; font-weight: 900; width: 100%; padding: 12px; border-radius: 12px; box-shadow: 0 4px 15px rgba(255,215,0,0.4); border:none; cursor:pointer; }
-
-/* 🍱 お弁当固有パーツ */
-.bento-card { display: flex; justify-content: space-between; align-items: center; padding: 16px; border-radius: 16px; box-sizing: border-box; margin-bottom: 10px; }
-.bento-info { display: flex; align-items: center; gap: 14px; }
-.bento-emoji-wrapper { font-size: 36px; }
-.bento-details { display: flex; flex-direction: column; justify-content: center; }
-.bento-name-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.bento-name { font-weight: 800; font-size: 15px; }
-.bento-qty-control { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
-.qty-display { font-weight: 900; font-size: 15px; min-width: 20px; text-align: center; }
-.grid-container { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding-bottom: 20px; }
-.grid-container button { padding: 20px 15px; border-radius: 16px; border: none; text-align: left; display: flex; align-items: center; gap: 12px; cursor: pointer; color: inherit; }
-.cooking-header { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 12px; }
-.cooking-title { font-size: 18px; font-weight: 900; }
-.counter-input { display: flex; align-items: center; justify-content: center; gap: 15px; margin: 15px 0; }
-.counter-input .btn-circle { width: 44px; height: 44px; font-size: 20px; }
-.counter-input .form-input { width: 80px; font-size: 24px; }
-.shopping-item-row { display: flex; align-items: center; padding: 6px 0; font-weight: bold; font-size: 14px; }
-.shopping-checkbox { width: 18px; height: 18px; margin-right: 10px; }
-.recipe-edit-list { margin-top: 15px; display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; }
-.recipe-edit-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-radius: 10px; background: rgba(0,0,0,0.03); font-size: 13px; font-weight: bold; }
-.history-item-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 10px; border-radius: 12px; background: rgba(0,0,0,0.02); margin-bottom: 8px; font-size: 13px; font-weight: bold; }
-.history-meta { font-size: 10px; opacity: 0.4; }
-.history-core { flex: 1; margin-left: 10px; display: flex; align-items: center; gap: 4px; }
-.history-amount { font-weight: 900; margin-right: 12px; }
-
-/* 💰 資産固有パーツ */
-.asset-display-panel { padding: 35px 20px; border-radius: 20px; text-align: center; }
-.asset-label { font-size: 13px; opacity: 0.6; font-weight: bold; margin: 0 0 8px 0; }
-.asset-value { font-size: 38px; font-weight: 900; word-break: break-all; }
-.blur-hint-text { font-size: 10px; opacity: 0.4; margin-top: 5px; font-weight: bold; }
-.blur-click { transition: filter 0.25s ease, -webkit-filter 0.25s ease; cursor: pointer; }
-.blur-click:not(.blurred-off) { filter: blur(12px); -webkit-filter: blur(12px); }
-.memo-panel { background: rgba(255, 165, 0, 0.05) !important; border: 1px solid rgba(255, 165, 0, 0.2) !important; text-align: left; }
-.memo-title { font-size: 11px; font-weight: bold; color: #d97706; margin-bottom: 4px; }
-.memo-content { font-size: 13px; margin: 0; font-weight: bold; opacity: 0.9; }
-.simulator-hero-banner { padding: 20px 15px; border-radius: 20px; margin-bottom: 20px; }
-.sim-banner-label { font-size: 11px; opacity: 0.6; font-weight: bold; margin: 0 0 4px 0; }
-.sim-banner-value { font-size: 28px; font-weight: 900; }
-.sim-banner-sub { font-size: 10px; opacity: 0.6; margin-top: 4px; }
-.chart-flex-box { display: flex; align-items: flex-end; height: 130px; gap: 2px; margin-top: 15px; padding: 0 4px; }
-.chart-bar-container { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; height: 100%; }
-.chart-bar-e { width: 100%; opacity: 0.95; border-radius: 1px 1px 0 0; }
-.chart-bar-p { width: 100%; }
-.chart-labels { display: flex; justify-content: space-between; font-size: 10px; font-weight: bold; opacity: 0.4; margin-top: 8px; }
-.stamp-card-masu { padding: 16px; border-radius: 20px; position: relative; box-sizing: border-box; }
-.stamp-card-masu.not-achieved { opacity: 0.45; filter: grayscale(50%); }
-.achieved-stamp-mark { position: absolute; top: -10px; right: -8px; font-size: 44px; z-index: 5; }
-.stamp-text-info { font-size: 10px; opacity: 0.5; font-weight: bold; margin-bottom: 2px; }
-.stamp-target-val { font-size: 18px; font-weight: 900; margin-bottom: 4px; }
-.stamp-reward-text { font-size: 11px; font-weight: bold; color: #ea580c; }
-.rewards-edit-container { max-height: 180px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-.reward-edit-row { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: bold; }
-.reward-edit-label { width: 65px; opacity: 0.5; }
+.btn-ticket-trigger {
+    background: linear-gradient(135deg, #ffd700, #ff8c00); color: #222;
+    padding: 12px 25px; border-radius: 25px; font-size: 13px; font-weight: 800;
+    box-shadow: 0 4px 12px rgba(255,215,0,0.3); margin-top: 8px; width: 90%; border: none; cursor: pointer;
+}
 
 /* ==========================================================================
-   🌟 ポップアップ（モーダル） & スプラッシュ画面
+   📖 図鑑（コレクション）画面
    ========================================================================== */
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-.modal-content { padding: 25px; border-radius: 20px; text-align: center; max-width: 85%; width: 290px; position: relative; }
+.collection-header { margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px; }
+.collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 10px; padding-bottom: 30px; }
+.item-empty {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; background: rgba(0,0,0,0.4); color: rgba(255,255,255,0.2);
+    font-size: 10px; font-weight: bold; border: 1px dashed rgba(255,255,255,0.2); border-radius: 10px; min-height: 106px;
+}
+.btn-gold {
+    background: linear-gradient(135deg, #ffd700, #ff8c00); color: black;
+    font-weight: 900; width: 100%; padding: 12px; border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(255,215,0,0.4); border:none; cursor:pointer;
+}
+.locked-notice { background: rgba(255,68,68,0.1); border: 1px solid #ff4444; color: #ff4444; padding: 10px; border-radius: 8px; text-align: center; font-size: 12px; font-weight: bold; margin-top: 10px; }
+
+/* ==========================================================================
+   🌟 モーダル & スプラッシュ画面
+   ========================================================================== */
+.modal {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center; z-index: 2000;
+}
+.modal-content {
+    padding: 25px; border-radius: 20px; text-align: center;
+    max-width: 85%; width: 290px; position: relative;
+}
 .modal-img-wrapper { position: relative; display: inline-block; margin: 15px 0; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
 #modal-card-img { width: 150px; height: 215px; object-fit: cover; display: block; }
 .modal-rarity { font-size: 26px; font-weight: 900; }
@@ -296,7 +319,11 @@ body {
 .modal-actions { display: flex; flex-direction: column; gap: 8px; }
 .btn-close { background: rgba(0,0,0,0.1); color: inherit; border: 1px solid rgba(0,0,0,0.1); }
 
-.fixed-splash { position: fixed; inset: 0; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #1d1d1f; color: white; transition: opacity 0.5s ease, visibility 0.5s; }
+.fixed-splash {
+    position: fixed; inset: 0; z-index: 5000; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; background: #1d1d1f; color: white;
+    transition: opacity 0.5s ease, visibility 0.5s;
+}
 .splash-content { text-align: center; }
 .splash-logo { font-size: 70px; margin-bottom: 15px; }
 .splash-title { font-size: 22px; font-weight: 900; letter-spacing: 2px; }
@@ -318,9 +345,14 @@ body {
 .theme-cute .bottom-nav { background: rgba(255,255,255,0.9); border-top: 3px solid #ffccd5; height: 80px; }
 .theme-gaming .bottom-nav { background: rgba(5,5,10,0.9); border-top: 1px solid #00ffcc; }
 
-.nav-btn { flex: 1; background: none; border: none; color: #888; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.2s; }
+.nav-btn {
+    flex: 1; background: none; border: none; color: #888;
+    cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: all 0.2s;
+}
 .nav-btn .icon { font-size: 20px; margin-bottom: 2px; transition: transform 0.2s; }
 .nav-btn .label { font-size: 9px; font-weight: bold; }
+
 .nav-btn.active { color: currentColor; }
 .nav-btn.active .icon { transform: translateY(-4px) scale(1.15); }
 .theme-stylish .nav-btn.active { color: #000000; }

@@ -5,139 +5,147 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="apple-touch-icon" href="icon.png">
-    <title>MY GACHA MAKER</title>
+    <title>お弁当在庫・節約管理</title>
     <link rel="stylesheet" href="style.css">
+    <!-- 演出用ライブラリ -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
-<body class="theme-stylish"> <div id="splash" class="fixed-splash">
+<body class="theme-stylish">
+
+    <!-- 🔑 起動時のお出迎え（スプラッシュ）画面 -->
+    <div id="splash" class="fixed-splash">
         <div id="splash-default" class="splash-content">
-            <div class="splash-logo">🎰</div>
-            <h1 class="splash-title">MY GACHA MAKER</h1>
+            <div class="splash-logo">🍱</div>
+            <h1 class="splash-title">BENTO APP</h1>
         </div>
         <img id="splash-custom" class="splash-custom-img hidden" src="" alt="Welcome">
     </div>
 
+    <!-- 背景用のレイヤー -->
     <div class="bg-layer" id="main-bg">
         <div class="glitter-shine"></div>
+        <div class="glitter-shine-overlay"></div>
     </div>
 
+    <!-- ヘッダー -->
     <header class="header">
-        <div class="header-title" id="current-gacha-title">ガチャメーカー</div>
+        <div class="header-main">
+            <span class="header-label">💰 浮いたお弁当代</span>
+            <div class="header-money" id="saved-money" title="タップして微調整も可能">¥0</div>
+        </div>
         <div class="header-status">
-            <span class="currency-display" id="header-stones">💎 0</span>
+            <span class="currency-display">冷凍ストック: <strong id="total-count">0</strong>食</span>
         </div>
     </header>
 
+    <!-- メインコンテンツ -->
     <main class="main-container">
 
+        <!-- 🏠 1. ホーム画面（ストック一覧） -->
         <section id="view-home" class="view active">
-            <div class="partner-container">
-                <div class="partner-wrapper">
-                    <img id="home-partner-img" src="" alt="相棒" class="partner-img" onclick="triggerPartnerSpeech()">
-                    <div class="blue-star-evolved hidden" id="home-partner-star"></div>
-                </div>
-                <div class="speech-bubble" id="home-message" onclick="triggerPartnerSpeech()">今日も一緒にがんばろう！</div>
+            <div class="list-container" id="inventory-list">
+                <!-- ここにお弁当カードが並びます -->
             </div>
-            
-            <div class="dashboard-stats">
-                <div class="stat-box">
-                    <div class="stat-label">コンプ率</div>
-                    <div class="stat-value"><span id="comp-percent">0</span>%</div>
-                    <div class="stat-sub" id="comp-fraction">0 / 0</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">通算ログイン</div>
-                    <div class="stat-value"><span id="login-days">0</span>日</div>
-                    <div class="stat-sub">毎日リセット</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">消費した石</div>
-                    <div class="stat-value" id="total-spent-stones">0</div>
-                    <div class="stat-sub">💎</div>
-                </div>
-            </div>
-            <div id="login-bonus-panel" class="hidden"></div>
         </section>
 
-        <section id="view-admin" class="view">
-            <div class="panel">
-                <h2 class="panel-title">📦 ガチャの切り替え・新規作成</h2>
-                <select id="gacha-selector" class="form-input"></select>
+        <!-- 🍳 2. お弁当を作る画面 -->
+        <section id="view-cook" class="view">
+            <!-- 料理選択モード -->
+            <div id="recipe-selection" class="grid-container">
+                <!-- 登録したメニューがボタンになって並びます -->
+            </div>
+
+            <!-- クッキング中パネル -->
+            <div id="cooking-panel" class="panel hidden">
+                <div class="cooking-header">
+                    <span id="cooking-emoji" class="text-4xl">🍱</span>
+                    <h3 id="cooking-name" class="cooking-title">料理名</h3>
+                </div>
+                <div class="form-group text-center">
+                    <label>何食分ストックを作った？</label>
+                    <div class="counter-input">
+                        <button onclick="changeMakeCount(-1)" class="btn-circle">-</button>
+                        <input type="number" id="make-count" value="4" class="form-input text-center">
+                        <button onclick="changeMakeCount(1)" class="btn-circle">+</button>
+                    </div>
+                </div>
                 <div class="button-group">
-                    <button id="btn-create-new-gacha" class="btn btn-outline">＋ 新規ガチャ</button>
-                    <button id="btn-share-gacha" class="btn btn-share">🔗 友達に送る</button>
+                    <button onclick="finishCooking()" class="btn btn-primary">完成！ストックに追加</button>
+                    <button onclick="cancelCooking()" class="btn btn-outline">戻る</button>
                 </div>
-                <div id="gacha-locked-notice" class="locked-notice hidden">🔒 このガチャは殿堂入りロックされています</div>
-            </div>
-
-            <div class="panel" id="card-create-panel">
-                <h2 class="panel-title">🖼️ 推しカードの実装（追加）</h2>
-                <div class="form-group">
-                    <label>スマホの画像を選ぶ</label>
-                    <input type="file" id="input-card-img" accept="image/*" class="form-input file-input">
-                </div>
-                <div class="form-group">
-                    <label>カードの名前</label>
-                    <input type="text" id="input-card-name" placeholder="例: おねむりシナモン" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>レアリティ (全9段階)</label>
-                    <select id="input-card-rarity" class="form-input">
-                        <option value="SLR">SLR (シークレットレジェンドレア: 0.01%)</option>
-                        <option value="LR">LR (レジェンドレア: 0.04%)</option>
-                        <option value="LE">LE (レジェンドエディション: 0.15%)</option>
-                        <option value="UR">UR (ウルトラレア: 0.5%)</option>
-                        <option value="SSR">SSR (スペシャルスーパーレア: 3.8%)</option>
-                        <option value="SR">SR (スーパーレア: 10.5%)</option>
-                        <option value="R">R (レア: 20%)</option>
-                        <option value="N" selected>N (ノーマル: 50%)</option>
-                        <option value="C">C (コモン/ネタ枠: 15%)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>セリフ・説明文（空欄OK）</label>
-                    <input type="text" id="input-card-desc" placeholder="排出時や相棒設定時のセリフ" class="form-input">
-                </div>
-                <button id="btn-add-card" class="btn btn-primary w-full">ガチャに実装する！</button>
             </div>
         </section>
 
-        <section id="view-gacha" class="view">
-            <div class="gacha-banner">
-                <div class="gacha-pickup-text" id="gacha-screen-status">最高レアを引き当てろ！</div>
-            </div>
-            
-            <div id="gacha-result-container" class="gacha-results">
-                <div class="idle-message">✨ 奇跡を求めて ✨</div>
-            </div>
-            
-            <div class="gacha-controls" id="gacha-action-controls">
-                <button id="btn-pull-1" class="btn btn-gacha">単発 (💎30)</button>
-                <button id="btn-pull-10" class="btn btn-gacha-10">10連 (💎300)</button>
-            </div>
-            <div class="ticket-controls" id="ticket-action-controls">
+        <!-- 🛒 3. お買い物リスト・メニュー管理画面 -->
+        <section id="view-menu" class="view space-y">
+            <div class="panel">
+                <h2 class="panel-title">🛒 週末のお買い物リスト</h2>
+                <div id="shopping-list-container">
+                    <p class="text-center opacity-50 text-xs">メニュー管理でチェックした料理の材料がここに自動で並びます</p>
                 </div>
-        </section>
-
-        <section id="view-collection" class="view">
-            <div class="collection-header">
-                <select id="collection-gacha-selector" class="form-input"></select>
-                <button id="btn-hall-of-fame" class="btn btn-gold hidden">🏆 コンプリート！殿堂入りさせる</button>
+                <button onclick="copyShoppingListToClipboard()" class="btn btn-share w-full" style="margin-top:15px;">📋 リストをコピーしてLINEに貼る</button>
             </div>
-            <div id="collection-grid" class="collection-grid"></div>
+
+            <div class="panel">
+                <h2 class="panel-title">✏️ メニューの登録・編集</h2>
+                <input type="hidden" id="edit-recipe-id">
+                <div class="form-row">
+                    <input type="text" id="new-recipe-emoji" placeholder="🍱" class="form-input text-center" style="width:50px;">
+                    <input type="text" id="new-recipe-name" placeholder="料理名（例：ハンバーグ）" class="form-input flex-1">
+                </div>
+                <div class="form-group" style="margin-top:10px;">
+                    <label>必要な材料（カンマやスペースで区切ってね）</label>
+                    <input type="text" id="new-recipe-ing" placeholder="ひき肉, 玉ねぎ, パン粉" class="form-input">
+                </div>
+                <div class="button-group">
+                    <button id="save-recipe-btn" onclick="saveRecipe()" class="btn btn-primary">メニューに追加</button>
+                    <button id="cancel-recipe-btn" onclick="cancelEditRecipe()" class="btn btn-outline hidden">キャンセル</button>
+                </div>
+                <div class="recipe-edit-list" id="recipe-edit-list"></div>
+            </div>
         </section>
 
-        <section id="view-settings" class="view">
+        <!-- 📜 4. 食べた履歴画面 -->
+        <section id="view-history" class="view">
+            <div class="panel">
+                <h2 class="panel-title">😋 最近食べたお弁当（最新10件）</h2>
+                <div class="history-list" id="history-list">
+                    <!-- ここに履歴と、スマート取り消し用の✖ボタンが並びます -->
+                </div>
+            </div>
+        </section>
+
+        <!-- 🛠️ 5. 詳細設定画面 -->
+        <section id="view-settings" class="view space-y">
             <div class="panel">
                 <h2 class="panel-title">🎨 アプリのテーマ着せ替え</h2>
-                <div class="form-group">
-                    <select id="theme-selector" class="form-input" onchange="changeAppTheme(this.value)">
-                        <option value="theme-stylish">🤍 スタイリッシュ (すりガラス透明感)</option>
-                        <option value="theme-cute">🌸 ポップ＆キュート (パステルふんわり)</option>
-                        <option value="theme-gaming">🎮 ゲーミング (ダーク＆ネオン発光)</option>
-                        <option value="theme-glitter">✨ マグネットグリッター (光動くラメツヤ)</option>
-                    </select>
+                <select id="theme-selector" class="form-input" onchange="changeAppTheme(this.value)">
+                    <option value="theme-stylish">🤍 スタイリッシュ (すりガラス透明感)</option>
+                    <option value="theme-cute">🌸 ポップ＆キュート (パステルふんわり)</option>
+                    <option value="theme-gaming">🎮 ゲーミング (ダーク＆ネオン発光)</option>
+                    <option value="theme-glitter">✨ マグネットグリッター (光動くラメツヤ)</option>
+                </select>
+            </div>
+
+            <!-- 🛠️ 今回追加の自由カラーカスタマイズパネル -->
+            <div class="panel" id="color-custom-panel">
+                <h2 class="panel-title">🎨 選択中テーマのカラーカスタム</h2>
+                <p style="font-size: 11px; opacity:0.7; margin-bottom:12px; font-weight:bold;">このテーマのカラーを自分好みに変更できます</p>
+                <div class="color-picker-grid">
+                    <div class="color-picker-row">
+                        <label>背景の色</label>
+                        <input type="color" id="custom-color-bg" onchange="updateCustomColor('bg', this.value)">
+                    </div>
+                    <div class="color-picker-row">
+                        <label>文字の色</label>
+                        <input type="color" id="custom-color-text" onchange="updateCustomColor('text', this.value)">
+                    </div>
+                    <div class="color-picker-row">
+                        <label>ボタン・主役色</label>
+                        <input type="color" id="custom-color-primary" onchange="updateCustomColor('primary', this.value)">
+                    </div>
                 </div>
+                <button onclick="resetCurrentThemeColors()" class="btn btn-outline w-full" style="margin-top:12px; padding:8px; font-size:11px;">このテーマの色を初期状態に戻す</button>
             </div>
 
             <div class="panel">
@@ -161,56 +169,49 @@
             </div>
 
             <div class="panel">
-                <h2 class="panel-title">☁️ クラウド同期・バックアップ (GAS)</h2>
+                <h2 class="panel-title">⚙️ 計算ルールのカスタマイズ</h2>
                 <div class="form-group">
-                    <input type="text" id="gas-url" class="form-input text-xs" placeholder="GASのウェブアプリURLを貼り付け">
+                    <label>お弁当1食あたりの節約想定額 (円)</label>
+                    <input type="number" id="settings-save-unit" class="form-input" value="600">
                 </div>
-                <div class="button-group">
+                <div class="form-group">
+                    <label>冷凍してから何日経ったらアラートを出す？ (日)</label>
+                    <input type="number" id="settings-alert-days" class="form-input" value="14">
+                </div>
+                <button onclick="saveAppSettings()" class="btn btn-primary w-full">ルールを保存する</button>
+            </div>
+
+            <div class="panel">
+                <h2 class="panel-title">🔑 パスワードの変更</h2>
+                <div class="form-group">
+                    <input type="password" id="settings-password" class="form-input" placeholder="新しい4桁の数字">
+                </div>
+                <button onclick="savePasswordOnly()" class="btn btn-outline w-full">パスワードを変更</button>
+            </div>
+
+            <div class="panel">
+                <h2 class="panel-title">☁️ クラウド同期・バックアップ (GAS)</h2>
+                <input type="text" id="gas-url" class="form-input text-xs" placeholder="GASのウェブアプリURLを貼り付け">
+                <div class="button-group" style="margin-top:10px;">
                     <button onclick="saveGasUrl()" class="btn btn-outline" style="font-size:12px;">URL保存</button>
                     <button onclick="triggerManualSync()" class="btn btn-share" style="font-size:12px;">☁️ 手動バックアップ</button>
                 </div>
                 <label class="flex-row-label">
                     <input type="checkbox" id="settings-auto-sync" onchange="toggleAutoSync(this.checked)"> 操作時に自動バックアップを行う
                 </label>
+                <hr style="border:0; border-top:1px solid rgba(0,0,0,0.1); margin:20px 0;">
+                <button onclick="resetData()" class="btn-text-danger w-full" style="text-align:center;">🗑️ アプリの全データをリセット</button>
             </div>
         </section>
 
     </main>
 
-    <div id="modal-card-detail" class="modal hidden">
-        <div class="modal-content">
-            <div id="modal-card-rarity" class="modal-rarity"></div>
-            <div class="modal-img-wrapper">
-                <img id="modal-card-img" src="" alt="Card">
-                <div id="modal-card-stars" class="modal-stars"></div>
-            </div>
-            <h2 id="modal-card-name" class="modal-name"></h2>
-            <div class="modal-copies">所持数: <span id="modal-card-count">0</span>枚</div>
-            <p id="modal-card-desc" class="modal-desc"></p>
-            
-            <div class="modal-actions">
-                <button id="btn-set-partner" class="btn btn-outline">🏠 ホームの相棒にする</button>
-                <button id="btn-close-modal" class="btn btn-close">閉じる</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="modal-import" class="modal hidden">
-        <div class="modal-content">
-            <h2>🎁 ガチャが届きました！</h2>
-            <p>お友達から新しいガチャデータを受け取りました。あなたのアプリに追加しますか？</p>
-            <div class="modal-actions">
-                <button id="btn-import-yes" class="btn btn-primary">インポートする！</button>
-                <button id="btn-import-no" class="btn btn-outline">やめる</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- 📱 下部ナビゲーションメニュー -->
     <nav class="bottom-nav">
-        <button class="nav-btn active" data-target="view-home"><span class="icon">🏠</span><br><span class="label">ホーム</span></button>
-        <button class="nav-btn" data-target="view-admin"><span class="icon">⚙️</span><br><span class="label">作る</span></button>
-        <button class="nav-btn" data-target="view-gacha"><span class="icon">🎰</span><br><span class="label">ガチャ</span></button>
-        <button class="nav-btn" data-target="view-collection"><span class="icon">📖</span><br><span class="label">図鑑</span></button>
+        <button class="nav-btn active" data-target="view-home"><span class="icon">🍱</span><br><span class="label">ストック</span></button>
+        <button class="nav-btn" data-target="view-cook"><span class="icon">🍳</span><br><span class="label">作った</span></button>
+        <button class="nav-btn" data-target="view-menu"><span class="icon">🛒</span><br><span class="label">メニュー</span></button>
+        <button class="nav-btn" data-target="view-history"><span class="icon">📜</span><br><span class="label">履歴</span></button>
         <button class="nav-btn" data-target="view-settings"><span class="icon">🛠️</span><br><span class="label">設定</span></button>
     </nav>
 
