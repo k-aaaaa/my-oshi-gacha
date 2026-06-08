@@ -1,7 +1,28 @@
+// ==========================================================================
+// 🔑 1. 4桁パスワード認証システム
+// ==========================================================================
+(function() {
+    let savedPass = localStorage.getItem('my_gacha_password');
+    if (!savedPass) {
+        savedPass = prompt("【初回設定】\nガチャメーカー専用のパスワードを半角数字で決めてください。\n(例: 0000 など自由な数字)");
+        if (savedPass) localStorage.setItem('my_gacha_password', savedPass);
+        else savedPass = "0000";
+    }
+    const authKey = "app_auth_my_gacha";
+    if (sessionStorage.getItem(authKey) !== "true") {
+        if (prompt("パスワードを入力してください") === savedPass) {
+            sessionStorage.setItem(authKey, "true");
+        } else {
+            document.body.innerHTML = "<div style='padding:50px;text-align:center;'><h1>認証失敗</h1><button onclick='location.reload()'>再試行</button></div>";
+            throw new Error("Auth failed");
+        }
+    }
+})();
+
 function vibrate() { if (navigator.vibrate) navigator.vibrate(15); }
 
 // ==========================================================================
-// 💾 グローバルセーブデータ構造 (カラーカスタム記憶対応)
+// 💾 2. グローバルセーブデータ構造 (カラーカスタム記憶対応)
 // ==========================================================================
 let state = JSON.parse(localStorage.getItem('my_gacha_universe_state')) || {
     gachas: [{ id: 'default', title: 'はじまりのガチャ', cards: [], isLocked: false }], 
@@ -30,7 +51,7 @@ let GAS_URL = localStorage.getItem('my_gacha_gas_url') || "";
 const dailySpeeches = [
     "今日も最高の引きを見せてくれよな！",
     "画面をタップすると私のセリフが変わるぞ！",
-    "100枚被ると『マグネットネイル風・青ラメ進化』ができるらしい…！",
+    "100枚被ると『青ラメ進化』ができるらしい…！",
     "設定画面から、このテーマの色を自由に変えられるようになったぞ！🎨",
     "毎日ログインすると、豪華な確定チケットが手に入るんだ。",
     "コンプリートしたら『殿堂入り』させてくれよな！",
@@ -38,13 +59,13 @@ const dailySpeeches = [
 ];
 
 // ==========================================================================
-// 🚀 アプリ起動時のイベント処理
+// 🚀 3. アプリ起動時のイベント処理
 // ==========================================================================
 window.addEventListener('DOMContentLoaded', () => {
-    // 1. テーマの即時適用＆記憶しているカスタムカラーの注入
+    // 🎨 テーマと記憶しているカスタムカラーの即時注入
     applyCurrentThemeAndColors();
 
-    // 2. お出迎え画面（スプラッシュ）の処理
+    // お出迎え画面（スプラッシュ）の処理
     const imgData = localStorage.getItem('my_gacha_welcome_img');
     const splashTime = state.splashTime || 1200;
     if (imgData) {
@@ -61,7 +82,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
     }, splashTime);
 
-    // 3. システムの初期動作
+    // システムの初期動作
     checkUrlForShare();
     checkLoginBonus();
     updateUI();
@@ -76,7 +97,7 @@ function saveLocal() {
 }
 
 // ==========================================================================
-// 🎨 カラーカスタマイズ制御エンジン
+// 🎨 4. カラーカスタマイズ制御エンジン
 // ==========================================================================
 function applyCurrentThemeAndColors() {
     const theme = state.appTheme || 'theme-stylish';
@@ -101,7 +122,7 @@ function applyCurrentThemeAndColors() {
     const colors = state.customColors[theme];
     const root = document.documentElement;
 
-    // 選択された色に合わせてCSS変数を動的に上書き（グラデーションも自動連動）
+    // 選択された色に合わせてCSS変数を動的に上書き（グラデーションも自動生成）
     if (theme === 'theme-stylish') {
         root.style.setProperty('--stylish-bg', `radial-gradient(circle at 20% 20%, #ffffff 0%, ${colors.bg} 100%)`);
         root.style.setProperty('--stylish-text', colors.text);
@@ -118,8 +139,7 @@ function applyCurrentThemeAndColors() {
         root.style.setProperty('--glitter-bg', `linear-gradient(135deg, #0e0524 0%, ${colors.bg} 60%, #000000 100%)`);
         root.style.setProperty('--glitter-text', colors.text);
         root.style.setProperty('--glitter-primary', colors.primary);
-        // マグネットネイルの光の筋の色（主役色）を半透明にしてブレンド
-        root.style.setProperty('--glitter-reflect', colors.primary + "66"); 
+        root.style.setProperty('--glitter-reflect', colors.primary + "66"); // 透明度を追加
     }
 
     // カラーピッカーのつまみの位置を同期
@@ -132,7 +152,6 @@ function applyCurrentThemeAndColors() {
     if (pickerPrimary) pickerPrimary.value = colors.primary.startsWith('#') ? colors.primary : '#1d1d1f';
 }
 
-// ピッカーを動かした時にリアルタイム反映する関数
 function updateCustomColor(type, value) {
     const theme = state.appTheme || 'theme-stylish';
     state.customColors[theme][type] = value;
@@ -140,7 +159,6 @@ function updateCustomColor(type, value) {
     saveLocal();
 }
 
-// 色を初期の組み合わせに戻すリセット機能
 function resetCurrentThemeColors() {
     vibrate();
     const theme = state.appTheme || 'theme-stylish';
@@ -164,7 +182,7 @@ function changeAppTheme(themeName) {
 }
 
 // ==========================================================================
-// 📱 タブ切り替えシステム
+// 📱 5. タブ切り替えシステム
 // ==========================================================================
 document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -182,7 +200,7 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 });
 
 // ==========================================================================
-// 🎁 寸止めログインボーナスシステム
+// 🎁 6. 寸止めログインボーナスシステム
 // ==========================================================================
 function checkLoginBonus() {
     const today = new Date().toLocaleDateString('ja-JP');
@@ -215,7 +233,7 @@ function checkLoginBonus() {
 }
 
 // ==========================================================================
-// 📢 相棒セリフ＆タップ連動システム
+// 📢 7. 相棒セリフ＆タップ連動システム
 // ==========================================================================
 function triggerPartnerSpeech(isInitial = false) {
     if (!isInitial) vibrate();
@@ -247,7 +265,7 @@ function triggerPartnerSpeech(isInitial = false) {
 }
 
 // ==========================================================================
-// 📊 UI画面全体の更新処理
+// 📊 8. UI画面全体の更新処理
 // ==========================================================================
 function updateUI() {
     document.getElementById('header-stones').innerText = `💎 ${state.stones}`;
@@ -302,18 +320,28 @@ function updateUI() {
         partnerStar.classList.add('hidden');
     }
 
-    document.getElementById('settings-auto-sync').checked = state.autoSync || false;
-    document.getElementById('gas-url').value = GAS_URL;
+    const autoSyncEl = document.getElementById('settings-auto-sync');
+    if (autoSyncEl) autoSyncEl.checked = state.autoSync || false;
+    
+    const gasUrlEl = document.getElementById('gas-url');
+    if (gasUrlEl) gasUrlEl.value = GAS_URL;
+
     const previewImg = localStorage.getItem('my_gacha_welcome_img');
     if (previewImg) {
-        document.getElementById('welcome-img-preview').src = previewImg;
-        document.getElementById('welcome-img-preview-container').classList.remove('hidden');
+        const previewEl = document.getElementById('welcome-img-preview');
+        const containerEl = document.getElementById('welcome-img-preview-container');
+        if(previewEl && containerEl) {
+            previewEl.src = previewImg;
+            containerEl.classList.remove('hidden');
+        }
     }
-    document.getElementById('settings-splash-time').value = state.splashTime || 1200;
+    
+    const splashTimeEl = document.getElementById('settings-splash-time');
+    if (splashTimeEl) splashTimeEl.value = state.splashTime || 1200;
 }
 
 // ==========================================================================
-// 🕹️ ガチャ画面描画＆チケットコントロール
+// 🕹️ 9. ガチャ画面描画＆チケットコントロール
 // ==========================================================================
 function renderGachaScreen() {
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
@@ -350,7 +378,7 @@ function renderGachaScreen() {
 }
 
 // ==========================================================================
-// 🎰 ガチャ排出処理（9段階レアリティ＆寸止め対応）
+// 🎰 10. ガチャ排出処理（9段階レアリティ＆寸止め対応）
 // ==========================================================================
 function pullGacha(times, ticketType = false, isLegendFree = false) {
     vibrate();
@@ -359,15 +387,16 @@ function pullGacha(times, ticketType = false, isLegendFree = false) {
         return alert("このガチャにはまだ景品がありません。⚙️「作る」から画像を登録してください！");
     }
 
-    if (isLegendFree) {
-    } else if (ticketType) {
-        if (state.tickets[ticketType] < 1) return;
-        state.tickets[ticketType] -= 1;
-    } else {
-        const cost = times * 30;
-        if (state.stones < cost) return alert("💎石が足りません！毎日のログボを待ってね！");
-        state.stones -= cost;
-        state.totalSpent += cost;
+    if (!isLegendFree) {
+        if (ticketType) {
+            if (state.tickets[ticketType] < 1) return;
+            state.tickets[ticketType] -= 1;
+        } else {
+            const cost = times * 30;
+            if (state.stones < cost) return alert("💎石が足りません！毎日のログボを待ってね！");
+            state.stones -= cost;
+            state.totalSpent += cost;
+        }
     }
 
     const container = document.getElementById('gacha-result-container');
@@ -437,11 +466,11 @@ function pullGacha(times, ticketType = false, isLegendFree = false) {
     }
     
     saveLocal();
-    if (isLegendFree) renderGachaScreen();
+    if (!isLegendFree) renderGachaScreen();
 }
 
 // ==========================================================================
-// 📖 図鑑（コレクション）＆🏆殿堂入りロック処理
+// 📖 11. 図鑑（コレクション）＆🏆殿堂入りロック処理
 // ==========================================================================
 function renderCollection() {
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
@@ -506,7 +535,7 @@ function triggerHallOfFame(gachaId) {
 }
 
 // ==========================================================================
-// 🖼️ お出迎え設定 ＆ GAS同期
+// 🖼️ 12. お出迎え設定 ＆ GAS同期
 // ==========================================================================
 function saveWelcomeImage(e) {
     const file = e.target.files[0];
@@ -534,6 +563,15 @@ function clearWelcomeImage() {
 function saveSplashTime(val) {
     state.splashTime = parseInt(val);
     saveLocal();
+}
+
+function savePasswordOnly() {
+    const p = document.getElementById('settings-password').value.trim();
+    if(p.length > 0) {
+        localStorage.setItem('my_gacha_password', p);
+        alert("🔑 パスワードを変更しました");
+        document.getElementById('settings-password').value = "";
+    }
 }
 
 function saveGasUrl() {
@@ -590,7 +628,7 @@ function cloudSyncSilent() {
 }
 
 // ==========================================================================
-// 🖼️ ガチャデータ・新規作成・管理ロジック
+// 🖼️ 13. ガチャデータ・新規作成・管理ロジック
 // ==========================================================================
 function renderGachaSelectors() {
     const adminSel = document.getElementById('gacha-selector');
@@ -682,7 +720,7 @@ if(document.getElementById('btn-add-card')) {
 }
 
 // ==========================================================================
-// 🔍 モーダル詳細画面 & 相棒設定
+// 🔍 14. モーダル詳細画面 & 相棒設定
 // ==========================================================================
 let currentModalTarget = null;
 function openModal(gachaId, cardId) {
@@ -722,7 +760,7 @@ if(document.getElementById('btn-set-partner')) {
 }
 
 // ==========================================================================
-// 🔗 URLシェア＆インポート
+// 🔗 15. URLシェア＆インポート
 // ==========================================================================
 if(document.getElementById('btn-share-gacha')) {
     document.getElementById('btn-share-gacha').addEventListener('click', () => {
