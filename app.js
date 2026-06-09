@@ -1,6 +1,3 @@
-// ==========================================================================
-// 🚀 パスワード撤廃＆初期化
-// ==========================================================================
 function vibrate() { if (navigator.vibrate) navigator.vibrate(15); }
 
 let state = JSON.parse(localStorage.getItem('my_gacha_universe_state')) || {
@@ -24,9 +21,17 @@ let state = JSON.parse(localStorage.getItem('my_gacha_universe_state')) || {
 let GAS_URL = localStorage.getItem('my_gacha_gas_url') || "";
 let lastPullShareText = "";
 
-// ==========================================================================
-// 🚀 起動処理 & サプライズURL検知
-// ==========================================================================
+// 🎁 新・7日間ログインボーナスの報酬リスト
+const LOGIN_REWARDS = [
+    { type: 'stone', val: 300, label: '💎300' },
+    { type: 'stone', val: 300, label: '💎300' },
+    { type: 'ssr', val: 1, label: '🎫SSR' },
+    { type: 'stone', val: 300, label: '💎300' },
+    { type: 'stone', val: 300, label: '💎300' },
+    { type: 'ur', val: 1, label: '🎫UR' },
+    { type: 'le', val: 1, label: '🎫LE\n💎1000' }
+];
+
 window.addEventListener('DOMContentLoaded', () => {
     applyCurrentThemeAndColors();
 
@@ -42,7 +47,7 @@ window.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         const splash = document.getElementById('splash');
         if (splash) { splash.style.opacity = '0'; setTimeout(() => splash.remove(), 500); }
-        checkSurpriseShare(); // スプラッシュ後にサプライズチェック
+        checkSurpriseShare(); 
     }, splashTime);
 
     checkLoginBonus();
@@ -56,9 +61,6 @@ function saveLocal() {
     updateUI();
 }
 
-// ==========================================================================
-// 🎨 カラーカスタマイズ制御エンジン（部位変更版）
-// ==========================================================================
 function applyCurrentThemeAndColors() {
     const theme = state.appTheme || 'theme-stylish';
     const themeSel = document.getElementById('theme-selector');
@@ -79,12 +81,9 @@ function applyCurrentThemeAndColors() {
     root.style.setProperty('--panel-bg', colors.panel);
     root.style.setProperty('--accent-color', colors.accent);
     
-    // テキストカラーの自動調整（背景が暗ければ白文字に）
     const hexToLuma = (color) => {
         const hex = color.replace('#', '');
-        const r = parseInt(hex.substr(0, 2), 16);
-        const g = parseInt(hex.substr(2, 2), 16);
-        const b = parseInt(hex.substr(4, 2), 16);
+        const r = parseInt(hex.substr(0, 2), 16), g = parseInt(hex.substr(2, 2), 16), b = parseInt(hex.substr(4, 2), 16);
         return [0.299 * r, 0.587 * g, 0.114 * b].reduce((a, b) => a + b) / 255;
     };
     root.style.setProperty('--text-color', hexToLuma(colors.bg) > 0.5 ? '#1d1d1f' : '#ffffff');
@@ -93,13 +92,9 @@ function applyCurrentThemeAndColors() {
     const pickerPanel = document.getElementById('custom-color-panel');
     const pickerAccent = document.getElementById('custom-color-accent');
     
-    // rgbaからhexへの簡易変換処理（カラーピッカー用）
     const rgbaToHex = (rgba) => {
         const match = rgba.match(/^rgba?[\s+]?\([\s+]?(\d+)[\s+]?,[\s+]?(\d+)[\s+]?,[\s+]?(\d+)/i);
-        return (match && match.length === 4) ? "#" +
-        ("0" + parseInt(match[1],10).toString(16)).slice(-2) +
-        ("0" + parseInt(match[2],10).toString(16)).slice(-2) +
-        ("0" + parseInt(match[3],10).toString(16)).slice(-2) : rgba;
+        return (match && match.length === 4) ? "#" + ("0" + parseInt(match[1],10).toString(16)).slice(-2) + ("0" + parseInt(match[2],10).toString(16)).slice(-2) + ("0" + parseInt(match[3],10).toString(16)).slice(-2) : rgba;
     };
 
     if (pickerBg) pickerBg.value = rgbaToHex(colors.bg);
@@ -110,8 +105,7 @@ function applyCurrentThemeAndColors() {
 function updateCustomColor(type, value) {
     const theme = state.appTheme || 'theme-stylish';
     state.customColors[theme][type] = value;
-    applyCurrentThemeAndColors();
-    saveLocal();
+    applyCurrentThemeAndColors(); saveLocal();
 }
 
 function resetCurrentThemeColors() {
@@ -123,123 +117,78 @@ function resetCurrentThemeColors() {
         'theme-gaming': { bg: '#07070c', panel: 'rgba(10, 10, 20, 0.8)', accent: '#00ffcc' }
     };
     state.customColors[theme] = { ...defaults[theme] };
-    applyCurrentThemeAndColors();
-    saveLocal();
+    applyCurrentThemeAndColors(); saveLocal();
     alert("このテーマの色を初期状態に戻しました！");
 }
 
 function changeAppTheme(themeName) {
-    vibrate();
-    state.appTheme = themeName;
-    applyCurrentThemeAndColors();
-    saveLocal();
+    vibrate(); state.appTheme = themeName; applyCurrentThemeAndColors(); saveLocal();
 }
 
-// ==========================================================================
-// 🎁 GASによるサプライズシェアシステム（超重要）
-// ==========================================================================
 function saveGasUrl() { 
     GAS_URL = document.getElementById('gas-url').value.trim(); 
     localStorage.setItem('my_gacha_gas_url', GAS_URL); 
-    alert("☁️ GASのURLを保存しました。これでサプライズシェアが使えます！"); 
+    alert("☁️ GASのURLを保存しました。"); 
 }
 
-// シェアボタン押下時
 if(document.getElementById('btn-share-gacha-gas')) {
     document.getElementById('btn-share-gacha-gas').addEventListener('click', async () => {
         vibrate();
         if(!GAS_URL) return alert("⚠️ 設定画面からGASのURLを登録してください！");
-        
         const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
         if (!currentGacha || currentGacha.cards.length === 0) return alert("カードが1枚もありません！");
         
         document.getElementById('btn-share-gacha-gas').innerText = "⏳ 準備中...";
-        
         const shareId = "share_" + Date.now();
-        const payload = {
-            action: "saveShare",
-            shareId: shareId,
-            gachaData: currentGacha
-        };
+        const payload = { action: "saveShare", shareId: shareId, gachaData: currentGacha };
 
         try {
-            // POSTでGASにデータを送信（CORS許可されたGASを想定）
-            const res = await fetch(GAS_URL, {
-                method: "POST",
-                body: JSON.stringify(payload)
-            });
+            const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload) });
             const result = await res.json();
-            
             if(result.status === "success") {
                 const shareUrl = window.location.origin + window.location.pathname + "?surprise=" + shareId;
                 navigator.clipboard.writeText(shareUrl).then(() => {
                     alert("🔗 サプライズURLをコピーしました！LINEで友達に送りましょう！\n\n" + shareUrl);
                 }).catch(() => prompt("以下のURLをコピーして送ってください:", shareUrl));
-            } else {
-                alert("エラーが発生しました。GASの設定を確認してください。");
-            }
+            } else alert("エラーが発生しました。");
         } catch(e) {
-            alert("通信に失敗しました。GASのコードやCORS設定を確認してください。");
-            console.error(e);
-        } finally {
-            document.getElementById('btn-share-gacha-gas').innerText = "🔗 シェア";
-        }
+            alert("通信に失敗しました。GASのコードを確認してください。");
+        } finally { document.getElementById('btn-share-gacha-gas').innerText = "🔗 シェア"; }
     });
 }
 
-// サプライズURL検知
 async function checkSurpriseShare() {
     const urlParams = new URLSearchParams(window.location.search);
     const surpriseId = urlParams.get('surprise');
     if (surpriseId && GAS_URL) {
         try {
-            // GETでGASからデータを取得
             const res = await fetch(GAS_URL + "?action=getShare&shareId=" + surpriseId);
             const result = await res.json();
-            
             if(result.status === "success" && result.data) {
                 const importedGacha = result.data;
                 document.getElementById('modal-surprise').classList.remove('hidden');
-                
                 document.getElementById('btn-surprise-open').onclick = () => {
                     vibrate();
-                    // ガチャを保存してアクティブにする
-                    importedGacha.id = 'imported_' + Date.now(); 
-                    importedGacha.title = "🎁 " + importedGacha.title; 
-                    importedGacha.isLocked = false; 
-                    state.gachas.push(importedGacha); 
-                    state.currentGachaId = importedGacha.id; 
-                    
-                    // 新規ガチャを引けるだけの石をプレゼント！
-                    state.stones += 3000; 
-                    saveLocal();
-                    
-                    // ガチャ画面へ強制ジャンプ
+                    importedGacha.id = 'imported_' + Date.now(); importedGacha.title = "🎁 " + importedGacha.title; importedGacha.isLocked = false; 
+                    state.gachas.push(importedGacha); state.currentGachaId = importedGacha.id; 
+                    state.stones += 3000; saveLocal();
                     document.getElementById('modal-surprise').classList.add('hidden');
                     window.history.replaceState({}, document.title, window.location.pathname);
                     document.querySelector('.nav-btn[data-target="view-gacha"]').click();
-                    
                     setTimeout(() => alert("✨ 石を3000個プレゼント！今すぐ引いてみよう！"), 500);
                 };
             }
-        } catch(e) {
-            console.error("サプライズデータの取得に失敗しました", e);
-        }
+        } catch(e) {}
     }
 }
 
-// ==========================================================================
-// 📱 タブ切り替え & その他UI
-// ==========================================================================
 document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         vibrate();
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        
         document.getElementById(btn.dataset.target).classList.add('active');
         btn.classList.add('active');
-        
         if (btn.dataset.target === 'view-collection') renderCollection();
         if (btn.dataset.target === 'view-admin') renderGachaSelectors();
         if (btn.dataset.target === 'view-gacha') {
@@ -249,39 +198,66 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     });
 });
 
+// 🎁 ログインボーナスの処理
 function checkLoginBonus() {
     const today = new Date().toLocaleDateString('ja-JP');
     if (state.lastLoginDate !== today) {
         state.lastLoginDate = today;
         state.loginDays += 1;
-        state.stones += 300; 
         
-        let bonusText = `💎 毎日ログインボーナス 300個 獲得！\n(通算 ${state.loginDays}日目)`;
-        const panel = document.getElementById('login-bonus-panel');
-        panel.innerHTML = `<div style="font-size:14px;font-weight:900;margin-bottom:5px;">🎁 本日のログインボーナス</div><p style="white-space:pre-wrap; font-size:12px; margin:0;">${bonusText}</p>`;
-        panel.classList.remove('hidden');
+        const cycleDay = ((state.loginDays - 1) % 7) + 1; 
+        const reward = LOGIN_REWARDS[cycleDay - 1];
+        let bonusText = `ログイン ${cycleDay}日目！\n`;
+        
+        if (reward.type === 'stone') {
+            state.stones += reward.val;
+            bonusText += `💎石を ${reward.val}個 獲得！`;
+        } else {
+            if (!state.tickets) state.tickets = { ssr: 0, ur: 0, le: 0 };
+            state.tickets[reward.type] += reward.val;
+            bonusText += `🎫【${reward.type.toUpperCase()}以上確定チケット】を獲得！`;
+            if(cycleDay === 7) {
+                state.stones += 1000;
+                bonusText += `\nさらに 💎1000個 獲得！`;
+            }
+        }
+        
         saveLocal();
-        setTimeout(() => { confetti({ particleCount: 80, spread: 60, origin: { y: 0.6 } }); }, 600);
+        setTimeout(() => { 
+            alert(`🎁 本日のログインボーナス\n\n${bonusText}`);
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.5 } }); 
+        }, 600);
     }
+}
+
+// 💮 スタンプカードの描画
+function renderStampCard() {
+    const container = document.getElementById('stamp-card-container');
+    if(!container) return;
+    container.innerHTML = '';
+    
+    const cycle = state.loginDays === 0 ? 0 : ((state.loginDays - 1) % 7) + 1;
+
+    LOGIN_REWARDS.forEach((r, idx) => {
+        const dayNum = idx + 1;
+        const isClaimed = state.loginDays > 0 && dayNum <= cycle;
+        const div = document.createElement('div');
+        div.className = `stamp-cell ${dayNum === 7 ? 'day7' : ''} ${isClaimed ? 'claimed' : ''}`;
+        div.innerHTML = `<div class="stamp-day">${dayNum}日目</div><div class="stamp-reward" style="white-space:pre-wrap;">${r.label}</div>`;
+        container.appendChild(div);
+    });
 }
 
 function triggerPartnerSpeech(isInitial = false) {
     if (!isInitial) vibrate();
     const bubble = document.getElementById('home-message');
-    if (!state.partner) {
-        bubble.innerText = "図鑑からお気に入りのカードを『相棒』に選んでね！";
-        return;
-    }
+    if (!state.partner) { bubble.innerText = "図鑑からお気に入りのカードを『相棒』に選んでね！"; return; }
     const currentGacha = state.gachas.find(g => g.id === state.partner.gachaId);
     if (!currentGacha) return;
     const card = currentGacha.cards.find(c => c.id === state.partner.cardId);
     if (!card) return;
-
-    if (Math.random() > 0.5 || isInitial) {
-        bubble.innerText = card.desc && card.desc !== "説明なし" ? `「${card.desc}」` : `私は「${card.name}」だよ！`;
-    } else {
-        bubble.innerText = "今日も最高の引きを見せてくれよな！";
-    }
+    if (Math.random() > 0.5 || isInitial) bubble.innerText = card.desc && card.desc !== "説明なし" ? `「${card.desc}」` : `私は「${card.name}」だよ！`;
+    else bubble.innerText = "今日も最高の引きを見せてくれよな！";
 }
 
 function updateUI() {
@@ -289,16 +265,16 @@ function updateUI() {
     document.getElementById('login-days').innerText = state.loginDays;
     document.getElementById('total-spent-stones').innerText = state.totalSpent;
     
+    renderStampCard(); // UI更新時にスタンプカードも描画
+
     if (state.gachas.length === 0) {
         document.getElementById('current-gacha-title').innerText = "ガチャがありません";
         document.getElementById('comp-percent').innerText = "0";
         document.getElementById('comp-fraction').innerText = "0 / 0";
         return;
     }
-
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId) || state.gachas[0];
     document.getElementById('current-gacha-title').innerText = currentGacha.title;
-
     if (currentGacha.cards.length > 0) {
         const inv = state.inventory[currentGacha.id] || {};
         const typesGot = Object.keys(inv).filter(cardId => inv[cardId] > 0).length;
@@ -309,7 +285,6 @@ function updateUI() {
         document.getElementById('comp-percent').innerText = 0;
         document.getElementById('comp-fraction').innerText = `0 / 0`;
     }
-
     const partnerImg = document.getElementById('home-partner-img');
     const partnerStar = document.getElementById('home-partner-star');
     if (state.partner) {
@@ -333,6 +308,8 @@ function renderGachaScreen() {
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
     const statusText = document.getElementById('gacha-screen-status');
     const actionControls = document.getElementById('gacha-action-controls');
+    const ticketControls = document.getElementById('ticket-action-controls');
+    ticketControls.innerHTML = "";
 
     if (!currentGacha) {
         statusText.innerText = "ガチャがありません";
@@ -341,17 +318,27 @@ function renderGachaScreen() {
     }
     statusText.innerText = "最高レアを引き当てろ！";
     actionControls.innerHTML = `<button onclick="pullGacha(1)" class="btn btn-gacha">単発 (💎30)</button><button onclick="pullGacha(10)" class="btn btn-gacha-10">10連 (💎300)</button>`;
+    
+    if (!state.tickets) state.tickets = { ssr: 0, ur: 0, le: 0 };
+    if (state.tickets.ssr > 0) ticketControls.innerHTML += `<button onclick="pullGacha(1, 'ssr')" class="btn btn-ticket-trigger">🎫 SSR以上確定で引く (${state.tickets.ssr}枚)</button>`;
+    if (state.tickets.ur > 0) ticketControls.innerHTML += `<button onclick="pullGacha(1, 'ur')" class="btn btn-ticket-trigger" style="background:linear-gradient(135deg, #00d4ff, #7b2ff7); color:white;">🎫 UR以上確定で引く (${state.tickets.ur}枚)</button>`;
+    if (state.tickets.le > 0) ticketControls.innerHTML += `<button onclick="pullGacha(1, 'le')" class="btn btn-ticket-trigger" style="background:linear-gradient(135deg, #ff00cc, #4a00e0); color:white;">🎫 LE以上確定で引く (${state.tickets.le}枚)</button>`;
 }
 
-function pullGacha(times) {
+function pullGacha(times, ticketType = false) {
     vibrate();
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
     if (!currentGacha || currentGacha.cards.length === 0) return alert("このガチャにはまだ景品がありません。⚙️「作る」から画像を登録してください！");
 
-    const cost = times * 30;
-    if (state.stones < cost) return alert("💎石が足りません！毎日のログボを待ってね！");
-    state.stones -= cost;
-    state.totalSpent += cost;
+    if (ticketType) {
+        if (state.tickets[ticketType] < 1) return;
+        state.tickets[ticketType] -= 1;
+    } else {
+        const cost = times * 30;
+        if (state.stones < cost) return alert("💎石が足りません！毎日のログボを待ってね！");
+        state.stones -= cost;
+        state.totalSpent += cost;
+    }
 
     const container = document.getElementById('gacha-result-container');
     container.innerHTML = "";
@@ -366,7 +353,15 @@ function pullGacha(times) {
         let rand = Math.random() * 100;
         let selectedRarity = 'N';
         
-        if (rand < 0.01) selectedRarity = 'SLR'; else if (rand < 0.05) selectedRarity = 'LR'; else if (rand < 0.2) selectedRarity = 'LE'; else if (rand < 0.7) selectedRarity = 'UR'; else if (rand < 4.5) selectedRarity = 'SSR'; else if (rand < 15.0) selectedRarity = 'SR'; else if (rand < 35.0) selectedRarity = 'R'; else if (rand < 85.0) selectedRarity = 'N'; else selectedRarity = 'C';
+        if (ticketType === 'le') {
+            if (rand < 5) selectedRarity = 'SLR'; else if (rand < 20) selectedRarity = 'LR'; else selectedRarity = 'LE';
+        } else if (ticketType === 'ur') {
+            if (rand < 1) selectedRarity = 'SLR'; else if (rand < 5) selectedRarity = 'LR'; else if (rand < 15) selectedRarity = 'LE'; else selectedRarity = 'UR';
+        } else if (ticketType === 'ssr') {
+            if (rand < 0.1) selectedRarity = 'SLR'; else if (rand < 0.5) selectedRarity = 'LR'; else if (rand < 2) selectedRarity = 'LE'; else if (rand < 10) selectedRarity = 'UR'; else selectedRarity = 'SSR';
+        } else {
+            if (rand < 0.01) selectedRarity = 'SLR'; else if (rand < 0.05) selectedRarity = 'LR'; else if (rand < 0.2) selectedRarity = 'LE'; else if (rand < 0.7) selectedRarity = 'UR'; else if (rand < 4.5) selectedRarity = 'SSR'; else if (rand < 15.0) selectedRarity = 'SR'; else if (rand < 35.0) selectedRarity = 'R'; else if (rand < 85.0) selectedRarity = 'N'; else selectedRarity = 'C';
+        }
 
         let pool = currentGacha.cards.filter(c => c.rarity === selectedRarity);
         if (pool.length === 0) pool = currentGacha.cards; 
@@ -404,9 +399,7 @@ function sharePullResult() {
     vibrate();
     navigator.clipboard.writeText(lastPullShareText).then(() => {
         alert("📋 結果をコピーしました！LINEやXでシェアしよう！\n\n" + lastPullShareText);
-    }).catch(() => {
-        prompt("以下のテキストをコピーしてください:", lastPullShareText);
-    });
+    }).catch(() => { prompt("以下のテキストをコピーしてください:", lastPullShareText); });
 }
 
 function renderCollection() {
@@ -462,14 +455,10 @@ function renderGachaSelectors() {
 }
 
 if(document.getElementById('gacha-selector')) {
-    document.getElementById('gacha-selector').addEventListener('change', (e) => {
-        state.currentGachaId = e.target.value; saveLocal();
-    });
+    document.getElementById('gacha-selector').addEventListener('change', (e) => { state.currentGachaId = e.target.value; saveLocal(); });
 }
 if(document.getElementById('collection-gacha-selector')) {
-    document.getElementById('collection-gacha-selector').addEventListener('change', (e) => {
-        state.currentGachaId = e.target.value; saveLocal(); renderCollection();
-    });
+    document.getElementById('collection-gacha-selector').addEventListener('change', (e) => { state.currentGachaId = e.target.value; saveLocal(); renderCollection(); });
 }
 
 if(document.getElementById('btn-create-new-gacha')) {
@@ -492,12 +481,8 @@ if(document.getElementById('btn-delete-gacha')) {
             state.gachas = state.gachas.filter(g => g.id !== state.currentGachaId);
             delete state.inventory[state.currentGachaId];
             if(state.partner && state.partner.gachaId === state.currentGachaId) state.partner = null;
-            
-            if (state.gachas.length > 0) {
-                state.currentGachaId = state.gachas[0].id;
-            } else {
-                state.currentGachaId = null;
-            }
+            if (state.gachas.length > 0) state.currentGachaId = state.gachas[0].id;
+            else state.currentGachaId = null;
             saveLocal(); renderGachaSelectors();
             alert("ガチャを完全に削除しました。");
         }

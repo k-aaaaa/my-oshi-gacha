@@ -11,7 +11,6 @@
 </head>
 <body class="theme-stylish">
     
-    <!-- ⚙️ スプラッシュ（お出迎え）画面 -->
     <div id="splash" class="fixed-splash">
         <div id="splash-default" class="splash-content">
             <div class="splash-logo">🎰</div>
@@ -20,10 +19,8 @@
         <img id="splash-custom" class="splash-custom-img hidden" src="" alt="Welcome">
     </div>
 
-    <!-- 背景レイヤー -->
     <div class="bg-layer" id="main-bg"></div>
 
-    <!-- ヘッダー -->
     <header class="header">
         <div class="header-title" id="current-gacha-title">ガチャメーカー</div>
         <div class="header-status">
@@ -31,7 +28,6 @@
         </div>
     </header>
 
-    <!-- メインコンテンツ -->
     <main class="main-container">
 
         <!-- 🏠 1. ホーム画面 -->
@@ -59,7 +55,12 @@
                     <div class="stat-value" id="total-spent-stones">0</div>
                 </div>
             </div>
-            <div id="login-bonus-panel" class="hidden"></div>
+
+            <!-- 🎁 ログインスタンプカード -->
+            <div class="panel" style="margin-top: 20px;">
+                <h3 class="panel-title text-center" style="margin-bottom:15px;">🎁 7日間ログインボーナス</h3>
+                <div class="stamp-card-container" id="stamp-card-container"></div>
+            </div>
         </section>
 
         <!-- ⚙️ 2. ガチャを作る・管理する画面 -->
@@ -69,7 +70,6 @@
                 <select id="gacha-selector" class="form-input"></select>
                 <div class="button-group">
                     <button id="btn-create-new-gacha" class="btn btn-outline">＋ 新規</button>
-                    <!-- GASを利用したサプライズシェア -->
                     <button id="btn-share-gacha-gas" class="btn btn-share">🔗 シェア</button>
                     <button id="btn-delete-gacha" class="btn btn-outline btn-danger">🗑️ 削除</button>
                 </div>
@@ -153,10 +153,8 @@
                 </select>
             </div>
 
-            <!-- 🎨 カスタムカラーパネル（部位変更版） -->
             <div class="panel" id="color-custom-panel">
                 <h2 class="panel-title">🎨 選択中テーマのカラーカスタム</h2>
-                <p style="font-size: 11px; opacity:0.7; margin-bottom:12px; font-weight:bold;">このテーマのカラーを自分好みに変更できます</p>
                 <div class="color-picker-grid">
                     <div class="color-picker-row">
                         <label>全体の背景色</label>
@@ -198,7 +196,6 @@
 
     </main>
 
-    <!-- 🌟 サプライズガチャ受け取りモーダル -->
     <div id="modal-surprise" class="modal hidden">
         <div class="modal-content">
             <h2>🎁 サプライズガチャ到着！</h2>
@@ -209,7 +206,6 @@
         </div>
     </div>
 
-    <!-- 🌟 モーダル群 -->
     <div id="modal-card-detail" class="modal hidden">
         <div class="modal-content">
             <div id="modal-card-rarity" class="modal-rarity"></div>
@@ -227,7 +223,6 @@
         </div>
     </div>
 
-    <!-- 📱 下部ナビゲーション -->
     <nav class="bottom-nav">
         <button class="nav-btn active" data-target="view-home"><span class="icon">🏠</span><br><span class="label">ホーム</span></button>
         <button class="nav-btn" data-target="view-admin"><span class="icon">⚙️</span><br><span class="label">作る</span></button>
