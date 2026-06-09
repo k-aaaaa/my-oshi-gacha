@@ -5,230 +5,227 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="apple-touch-icon" href="icon.png">
-    <title>MY GACHA MAKER</title>
+    <title>MY ASSET MANAGER</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 <body class="theme-stylish">
-    
-    <div id="splash" class="fixed-splash">
-        <div id="splash-default" class="splash-content">
-            <div class="splash-logo">🎰</div>
-            <h1 class="splash-title">MY GACHA MAKER</h1>
+
+    <!-- 🔒 セキュリティ：PINロック画面（最前面） -->
+    <div id="lock-screen" class="fixed-overlay hidden">
+        <div class="lock-container">
+            <div class="lock-icon">🔒</div>
+            <h2 class="lock-title">パスワードを入力</h2>
+            <div class="pin-display" id="pin-display">
+                <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+            </div>
+            <div id="pin-error" class="pin-error"></div>
+            <div class="pin-pad">
+                <button class="pin-btn" onclick="inputPin('1')">1</button>
+                <button class="pin-btn" onclick="inputPin('2')">2</button>
+                <button class="pin-btn" onclick="inputPin('3')">3</button>
+                <button class="pin-btn" onclick="inputPin('4')">4</button>
+                <button class="pin-btn" onclick="inputPin('5')">5</button>
+                <button class="pin-btn" onclick="inputPin('6')">6</button>
+                <button class="pin-btn" onclick="inputPin('7')">7</button>
+                <button class="pin-btn" onclick="inputPin('8')">8</button>
+                <button class="pin-btn" onclick="inputPin('9')">9</button>
+                <button class="pin-btn btn-clear" onclick="clearPin()">C</button>
+                <button class="pin-btn" onclick="inputPin('0')">0</button>
+                <button class="pin-btn btn-forgot" onclick="showRecovery()">忘れた?</button>
+            </div>
         </div>
-        <img id="splash-custom" class="splash-custom-img hidden" src="" alt="Welcome">
     </div>
 
+    <!-- 🔒 セキュリティ：秘密の質問（復旧画面） -->
+    <div id="recovery-screen" class="fixed-overlay hidden">
+        <div class="modal-content">
+            <h2>🔐 パスワードの復旧</h2>
+            <p style="font-size:12px; margin-bottom:15px; opacity:0.8;">設定した秘密の質問に答えてください。</p>
+            <div class="form-group">
+                <label>秘密の質問</label>
+                <div id="recovery-question-text" style="font-weight:bold; font-size:16px; margin-bottom:10px;">未設定</div>
+            </div>
+            <div class="form-group">
+                <label>答え</label>
+                <input type="text" id="recovery-answer-input" class="form-input" placeholder="答えを入力">
+            </div>
+            <div class="button-group">
+                <button class="btn btn-outline" onclick="hideRecovery()">戻る</button>
+                <button class="btn btn-primary" onclick="attemptRecovery()">解除する</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ⚙️ スプラッシュ画面 -->
+    <div id="splash" class="fixed-splash">
+        <div id="splash-default" class="splash-content">
+            <div class="splash-logo">📈</div>
+            <h1 class="splash-title">ASSET MANAGER</h1>
+        </div>
+    </div>
+
+    <!-- 背景レイヤー -->
     <div class="bg-layer" id="main-bg"></div>
 
+    <!-- ヘッダー -->
     <header class="header">
-        <div class="header-title" id="current-gacha-title">ガチャメーカー</div>
-        <div class="header-status">
-            <span class="currency-display" id="header-stones">💎 0</span>
-        </div>
+        <div class="header-title">MY ASSET</div>
     </header>
 
+    <!-- メインコンテンツ -->
     <main class="main-container">
 
-        <!-- 🏠 1. ホーム画面 -->
-        <section id="view-home" class="view active">
-            <div class="partner-container">
-                <div class="partner-wrapper">
-                    <img id="home-partner-img" src="" alt="相棒" class="partner-img" onclick="triggerPartnerSpeech()">
-                    <div class="blue-star-evolved hidden" id="home-partner-star"></div>
-                </div>
-                <div class="speech-bubble" id="home-message" onclick="triggerPartnerSpeech()">今日も一緒にがんばろう！</div>
-            </div>
-            
-            <div class="dashboard-stats">
-                <div class="stat-box">
-                    <div class="stat-label">コンプ率</div>
-                    <div class="stat-value"><span id="comp-percent">0</span>%</div>
-                    <div class="stat-sub" id="comp-fraction">0 / 0</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">通算ログイン</div>
-                    <div class="stat-value"><span id="login-days">0</span>日</div>
-                </div>
-                <div class="stat-box">
-                    <div class="stat-label">消費した石</div>
-                    <div class="stat-value" id="total-spent-stones">0</div>
-                </div>
+        <!-- 📈 1. 証券口座メイン画面 -->
+        <section id="view-securities" class="view active">
+            <div class="total-asset-panel">
+                <div class="total-label">証券口座 評価額</div>
+                <div class="total-value">¥ <span id="display-total-securities">0</span></div>
+                <div class="total-diff" id="display-diff">前日比: --</div>
             </div>
 
-            <!-- 🎁 ログインスタンプカード -->
-            <div class="panel" style="margin-top: 20px;">
-                <h3 class="panel-title text-center" style="margin-bottom:15px;">🎁 7日間ログインボーナス</h3>
-                <div class="stamp-card-container" id="stamp-card-container"></div>
-            </div>
-        </section>
-
-        <!-- ⚙️ 2. ガチャを作る・管理する画面 -->
-        <section id="view-admin" class="view">
             <div class="panel">
-                <h2 class="panel-title">📦 ガチャの切り替え・管理</h2>
-                <select id="gacha-selector" class="form-input"></select>
-                <div class="button-group">
-                    <button id="btn-create-new-gacha" class="btn btn-outline">＋ 新規</button>
-                    <button id="btn-share-gacha-gas" class="btn btn-share">🔗 シェア</button>
-                    <button id="btn-delete-gacha" class="btn btn-outline btn-danger">🗑️ 削除</button>
-                </div>
-                <div id="gacha-locked-notice" class="locked-notice hidden">🔒 このガチャは殿堂入りロックされています</div>
-            </div>
-
-            <div class="panel" id="card-create-panel">
-                <h2 class="panel-title">🖼️ 推しカードの実装（追加）</h2>
-                <div class="form-group">
-                    <label>スマホの画像を選ぶ</label>
-                    <input type="file" id="input-card-img" accept="image/*" class="form-input file-input">
-                </div>
-                <div class="form-group">
-                    <label>カードの名前</label>
-                    <input type="text" id="input-card-name" placeholder="例: おねむりシナモン" class="form-input">
-                </div>
-                <div class="form-group">
-                    <label>レアリティ (全9段階)</label>
-                    <select id="input-card-rarity" class="form-input">
-                        <option value="SLR">SLR (0.01%)</option>
-                        <option value="LR">LR (0.04%)</option>
-                        <option value="LE">LE (0.15%)</option>
-                        <option value="UR">UR (0.5%)</option>
-                        <option value="SSR">SSR (3.8%)</option>
-                        <option value="SR">SR (10.5%)</option>
-                        <option value="R">R (20%)</option>
-                        <option value="N" selected>N (50%)</option>
-                        <option value="C">C (15%)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>セリフ・説明文（空欄OK）</label>
-                    <input type="text" id="input-card-desc" placeholder="排出時や相棒設定時のセリフ" class="form-input">
-                </div>
-                <button id="btn-add-card" class="btn btn-primary w-full">ガチャに実装する！</button>
-            </div>
-        </section>
-
-        <!-- 🎰 3. ガチャを引く画面 -->
-        <section id="view-gacha" class="view">
-            <div class="gacha-banner">
-                <div class="gacha-pickup-text" id="gacha-screen-status">最高レアを引き当てろ！</div>
-            </div>
-            
-            <div id="gacha-result-container" class="gacha-results">
-                <div class="idle-message">✨ 奇跡を求めて ✨</div>
-            </div>
-            
-            <button id="btn-share-pull-result" class="btn btn-share w-full hidden" style="margin-bottom: 15px;" onclick="sharePullResult()">📋 今回のガチャ結果をコピー</button>
-
-            <div class="gacha-controls" id="gacha-action-controls">
-                <button id="btn-pull-1" class="btn btn-gacha" onclick="pullGacha(1)">単発 (💎30)</button>
-                <button id="btn-pull-10" class="btn btn-gacha-10" onclick="pullGacha(10)">10連 (💎300)</button>
-            </div>
-            <div class="ticket-controls" id="ticket-action-controls"></div>
-        </section>
-
-        <!-- 📖 4. 図鑑 (ミュージアム) 画面 -->
-        <section id="view-collection" class="view">
-            <div class="collection-header">
-                <select id="collection-gacha-selector" class="form-input"></select>
+                <h2 class="panel-title">📝 今日の評価額を記録</h2>
                 <div class="form-row">
-                    <select id="collection-sort-selector" class="form-input flex-1" onchange="renderCollection()">
-                        <option value="rarity">✨ レアリティ順</option>
-                        <option value="newest">🆕 新しく追加された順</option>
-                    </select>
+                    <input type="number" id="input-securities-amount" class="form-input flex-1" placeholder="現在の評価額 (円)">
+                    <button class="btn btn-primary" onclick="recordSecurities()">記録</button>
                 </div>
-                <button id="btn-hall-of-fame" class="btn btn-gold hidden">🏆 コンプリート！殿堂入りさせる</button>
             </div>
-            <div id="collection-grid" class="collection-grid"></div>
+
+            <div class="panel">
+                <h2 class="panel-title">📊 評価額の推移 (履歴)</h2>
+                <div id="securities-history-list" class="history-list">
+                    <!-- 履歴がここに入ります -->
+                </div>
+            </div>
         </section>
 
-        <!-- ⚙️ 5. アプリ設定画面 -->
+        <!-- ✉️ 2. 封筒貯金画面 -->
+        <section id="view-envelopes" class="view">
+            <div class="button-group" style="margin-bottom: 20px;">
+                <button class="btn btn-outline w-full" onclick="openEnvelopeModal()">＋ 新しい封筒を作る</button>
+            </div>
+            
+            <div id="envelopes-grid" class="envelopes-grid">
+                <!-- 封筒カードがここに入ります -->
+            </div>
+        </section>
+
+        <!-- ⚙️ 3. 設定画面 -->
         <section id="view-settings" class="view space-y">
             <div class="panel">
-                <h2 class="panel-title">🎨 アプリのテーマ着せ替え</h2>
+                <h2 class="panel-title">🎨 アプリのテーマ</h2>
                 <select id="theme-selector" class="form-input" onchange="changeAppTheme(this.value)">
-                    <option value="theme-stylish">🤍 スタイリッシュ (すりガラス透明感)</option>
-                    <option value="theme-cute">🌸 ポップ＆キュート (パステルふんわり)</option>
-                    <option value="theme-gaming">🎮 ゲーミング (ダーク＆ネオン発光)</option>
+                    <option value="theme-stylish">🤍 スタイリッシュ (すりガラス)</option>
+                    <option value="theme-cute">🌸 ポップ＆キュート (パステル)</option>
+                    <option value="theme-gaming">🎮 ゲーミング (ダーク＆ネオン)</option>
                 </select>
             </div>
 
-            <div class="panel" id="color-custom-panel">
-                <h2 class="panel-title">🎨 選択中テーマのカラーカスタム</h2>
-                <div class="color-picker-grid">
-                    <div class="color-picker-row">
-                        <label>全体の背景色</label>
-                        <input type="color" id="custom-color-bg" onchange="updateCustomColor('bg', this.value)">
-                    </div>
-                    <div class="color-picker-row">
-                        <label>パネルの背景色</label>
-                        <input type="color" id="custom-color-panel" onchange="updateCustomColor('panel', this.value)">
-                    </div>
-                    <div class="color-picker-row">
-                        <label>アクセント（ボタン等）</label>
-                        <input type="color" id="custom-color-accent" onchange="updateCustomColor('accent', this.value)">
-                    </div>
-                </div>
-                <button onclick="resetCurrentThemeColors()" class="btn btn-outline w-full" style="margin-top:12px; padding:8px; font-size:11px;">このテーマの色を初期状態に戻す</button>
+            <div class="panel" style="border: 2px solid #ff4444;">
+                <h2 class="panel-title">🔒 アプリロック設定</h2>
+                <p style="font-size:11px; opacity:0.8; margin-bottom:10px;">アプリ起動時に4桁の暗証番号を要求します。</p>
+                <div id="lock-status-display" style="margin-bottom:10px; font-weight:bold;">状態: <span id="lock-status-text">未設定</span></div>
+                <button class="btn btn-outline w-full" id="btn-setup-lock" onclick="openLockSetupModal()">ロックを設定・変更する</button>
+                <button class="btn btn-danger w-full hidden" id="btn-remove-lock" onclick="removeLock()" style="margin-top:10px;">ロックを解除（オフにする）</button>
             </div>
 
-            <div class="panel">
-                <h2 class="panel-title">🖼️ お出迎え画面設定</h2>
-                <div class="form-group">
-                    <label>画像を選ぶ</label>
-                    <input type="file" id="settings-welcome-img" accept="image/*" class="form-input file-input" onchange="saveWelcomeImage(event)">
-                </div>
-                <div id="welcome-img-preview-container" class="hidden text-center">
-                    <img id="welcome-img-preview" class="img-preview" src="">
-                    <button onclick="clearWelcomeImage()" class="btn-text-danger">画像を消去する</button>
-                </div>
-            </div>
-
-            <div class="panel">
-                <h2 class="panel-title">☁️ クラウド連携 (GAS)</h2>
-                <p style="font-size: 11px; opacity:0.7; margin-bottom:10px; font-weight:bold;">※サプライズシェアを利用するにはGASのURL登録が必須です。</p>
-                <div class="form-group">
-                    <input type="text" id="gas-url" class="form-input text-xs" placeholder="GASのURLを貼り付け">
-                </div>
-                <button onclick="saveGasUrl()" class="btn btn-outline w-full" style="font-size:12px;">URLを保存</button>
+            <div class="panel" style="border: 2px solid var(--accent-color);">
+                <h2 class="panel-title">💾 究極のデータバックアップ</h2>
+                <p style="font-size:10px; opacity:0.7; margin-bottom:10px;">全データを「ファイル」として安全に書き出します。新機能追加時も自動穴埋めで安全に復元できます！</p>
+                <button onclick="exportData()" class="btn btn-primary w-full" style="margin-bottom:10px;">📥 データを書き出す (保存)</button>
+                <label class="btn btn-outline w-full text-center" style="display:block; cursor:pointer;">
+                    📤 ファイルからデータを復元する
+                    <input type="file" accept=".json" class="hidden" onchange="importData(event)">
+                </label>
             </div>
         </section>
 
     </main>
 
-    <div id="modal-surprise" class="modal hidden">
+    <!-- ✉️ 封筒作成・編集モーダル -->
+    <div id="modal-envelope" class="modal hidden">
         <div class="modal-content">
-            <h2>🎁 サプライズガチャ到着！</h2>
-            <p>お友達から特別なガチャが届きました！<br>今すぐ引いてみましょう！</p>
-            <div class="modal-actions" style="margin-top: 20px;">
-                <button id="btn-surprise-open" class="btn btn-primary">ガチャを開封する！</button>
+            <h2 id="modal-envelope-title">新しい封筒</h2>
+            <input type="hidden" id="envelope-edit-id">
+            <div class="form-group">
+                <label>アイコン (絵文字)</label>
+                <input type="text" id="env-input-emoji" class="form-input" placeholder="例: 🚗, ✈️, 🎁" maxlength="2" value="💰">
+            </div>
+            <div class="form-group">
+                <label>封筒の名前</label>
+                <input type="text" id="env-input-name" class="form-input" placeholder="例: 車検代, 旅行用">
+            </div>
+            <div class="form-group">
+                <label>目標金額 (円)</label>
+                <input type="number" id="env-input-target" class="form-input" placeholder="例: 100000">
+            </div>
+            <div class="form-group">
+                <label>テーマカラー</label>
+                <select id="env-input-color" class="form-input">
+                    <option value="#ff4b4b">🍎 レッド</option>
+                    <option value="#4b7bff" selected>💧 ブルー</option>
+                    <option value="#32cd32">🍏 グリーン</option>
+                    <option value="#ffb700">🍋 イエロー</option>
+                    <option value="#a84bff">🍇 パープル</option>
+                    <option value="#ff69b4">🍑 ピンク</option>
+                </select>
+            </div>
+            <div class="button-group">
+                <button class="btn btn-outline" onclick="closeModal('modal-envelope')">キャンセル</button>
+                <button class="btn btn-primary" onclick="saveEnvelope()">保存</button>
+            </div>
+            <button class="btn btn-danger w-full hidden" id="env-btn-delete" style="margin-top:10px;" onclick="deleteEnvelope()">🗑️ この封筒を捨てる</button>
+        </div>
+    </div>
+
+    <!-- 💰 封筒 出し入れモーダル -->
+    <div id="modal-envelope-money" class="modal hidden">
+        <div class="modal-content">
+            <h2><span id="em-emoji"></span> <span id="em-name"></span></h2>
+            <p style="font-size:12px; margin-bottom:15px;">現在の金額: <span id="em-current" style="font-weight:bold;">0</span>円</p>
+            <input type="hidden" id="em-id">
+            <div class="form-group">
+                <input type="number" id="em-amount" class="form-input" placeholder="金額を入力 (円)">
+            </div>
+            <div class="button-group">
+                <button class="btn btn-outline" style="border-color:#ff4b4b; color:#ff4b4b;" onclick="updateEnvelopeMoney('sub')">ー 出す</button>
+                <button class="btn btn-primary" onclick="updateEnvelopeMoney('add')">＋ 入れる</button>
+            </div>
+            <button class="btn btn-outline w-full" style="margin-top:15px;" onclick="closeModal('modal-envelope-money')">閉じる</button>
+        </div>
+    </div>
+
+    <!-- 🔒 ロック設定モーダル -->
+    <div id="modal-lock-setup" class="modal hidden">
+        <div class="modal-content">
+            <h2>ロックの設定</h2>
+            <div class="form-group">
+                <label>4桁の暗証番号 (PIN)</label>
+                <input type="number" id="setup-pin" class="form-input" placeholder="例: 1234" maxlength="4" oninput="if(this.value.length>4)this.value=this.value.slice(0,4)">
+            </div>
+            <div class="form-group">
+                <label>秘密の質問（忘れた時の復旧用）</label>
+                <select id="setup-question" class="form-input" style="margin-bottom:8px;">
+                    <option value="最初に飼ったペットの名前は？">最初に飼ったペットの名前は？</option>
+                    <option value="母親の旧姓は？">母親の旧姓は？</option>
+                    <option value="子供の頃の親友の名前は？">子供の頃の親友の名前は？</option>
+                    <option value="好きだった給食のメニューは？">好きだった給食のメニューは？</option>
+                </select>
+                <input type="text" id="setup-answer" class="form-input" placeholder="答えを入力">
+            </div>
+            <div class="button-group">
+                <button class="btn btn-outline" onclick="closeModal('modal-lock-setup')">キャンセル</button>
+                <button class="btn btn-primary" onclick="saveLockSetup()">設定する</button>
             </div>
         </div>
     </div>
 
-    <div id="modal-card-detail" class="modal hidden">
-        <div class="modal-content">
-            <div id="modal-card-rarity" class="modal-rarity"></div>
-            <div class="modal-img-wrapper">
-                <img id="modal-card-img" src="" alt="Card">
-                <div id="modal-card-stars" class="modal-stars"></div>
-            </div>
-            <h2 id="modal-card-name" class="modal-name"></h2>
-            <div class="modal-copies">所持数: <span id="modal-card-count">0</span>枚</div>
-            <p id="modal-card-desc" class="modal-desc"></p>
-            <div class="modal-actions">
-                <button id="btn-set-partner" class="btn btn-outline">🏠 ホームの相棒にする</button>
-                <button id="btn-close-modal" class="btn btn-close">閉じる</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- 📱 下部ナビゲーション -->
     <nav class="bottom-nav">
-        <button class="nav-btn active" data-target="view-home"><span class="icon">🏠</span><br><span class="label">ホーム</span></button>
-        <button class="nav-btn" data-target="view-admin"><span class="icon">⚙️</span><br><span class="label">作る</span></button>
-        <button class="nav-btn" data-target="view-gacha"><span class="icon">🎰</span><br><span class="label">ガチャ</span></button>
-        <button class="nav-btn" data-target="view-collection"><span class="icon">📖</span><br><span class="label">図鑑</span></button>
-        <button class="nav-btn" data-target="view-settings"><span class="icon">🛠️</span><br><span class="label">設定</span></button>
+        <button class="nav-btn active" data-target="view-securities"><span class="icon">📈</span><br><span class="label">証券口座</span></button>
+        <button class="nav-btn" data-target="view-envelopes"><span class="icon">✉️</span><br><span class="label">封筒貯金</span></button>
+        <button class="nav-btn" data-target="view-settings"><span class="icon">⚙️</span><br><span class="label">設定</span></button>
     </nav>
 
     <script src="app.js"></script>
