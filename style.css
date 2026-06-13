@@ -8,10 +8,13 @@
     --text-color: #1d1d1f;
 }
 
+/* はみ出し防止（要素の内側に余白を収める） */
+* { box-sizing: border-box; }
+
 body {
     margin: 0; padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    overflow: hidden; padding-bottom: 80px; height: 100vh; box-sizing: border-box;
+    overflow: hidden; padding-bottom: 80px; height: 100vh;
     background: var(--bg-color); color: var(--text-color);
     transition: all 0.3s ease;
 }
@@ -23,10 +26,10 @@ body {
 
 .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: var(--panel-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.1); z-index: 100; transition: background 0.3s ease;}
 .header-title { font-weight: 900; font-size: 18px; letter-spacing: 0.5px; }
-.main-container { height: calc(100vh - 140px); overflow-y: auto; padding: 20px; box-sizing: border-box; -webkit-overflow-scrolling: touch; position: relative; z-index: 10; }
+.main-container { height: calc(100vh - 140px); overflow-y: auto; padding: 20px; -webkit-overflow-scrolling: touch; position: relative; z-index: 10; }
 
 .space-y > * { margin-bottom: 20px; }
-.panel { padding: 20px; border-radius: 16px; margin-bottom: 20px; box-sizing: border-box; background: var(--panel-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: background 0.3s ease;}
+.panel { padding: 20px; border-radius: 16px; margin-bottom: 20px; background: var(--panel-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); box-shadow: 0 4px 15px rgba(0,0,0,0.05); transition: background 0.3s ease;}
 .panel-title { margin: 0 0 15px 0; font-size: 15px; font-weight: bold; opacity: 0.9; }
 
 .color-picker-grid { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
@@ -37,22 +40,22 @@ body {
 .form-group label { display: block; font-size: 11px; font-weight: bold; margin-bottom: 6px; opacity: 0.8; }
 .form-row { display: flex; gap: 10px; }
 .flex-1 { flex: 1; }
-.form-input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.8); color: #333; font-weight: bold; box-sizing: border-box; font-size: 14px; transition: all 0.2s; }
+.form-input { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid rgba(0,0,0,0.1); background: rgba(255,255,255,0.8); color: #333; font-weight: bold; font-size: 14px; transition: all 0.2s; }
 .form-input:focus { outline: none; border-color: var(--accent-color); }
 .file-input { padding: 8px; }
 
 .btn { border: none; padding: 14px; border-radius: 12px; font-weight: 800; cursor: pointer; text-align: center; font-size: 14px; transition: transform 0.1s, background 0.3s; user-select: none; }
 .btn:active { transform: scale(0.95); }
 .w-full { width: 100%; }
-.button-group { display: flex; gap: 10px; margin-top: 10px; }
-.button-group .btn { flex: 1; padding: 10px; font-size: 12px; }
+.button-group { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; } /* 折り返し設定を追加 */
+.button-group .btn { flex: 1; min-width: 80px; padding: 10px; font-size: 12px; }
 
 .btn-primary { background: var(--accent-color); color: #fff; }
 .btn-outline { border: 2px solid var(--accent-color); color: var(--accent-color); background: transparent; }
 .btn-share { background: #00d4ff; color: #000; font-weight: bold; }
 .btn-gold { background: linear-gradient(135deg, #ffd700, #ff8c00); color: #000; box-shadow: 0 4px 15px rgba(255,215,0,0.3); }
 .btn-danger { border-color: #ff4444 !important; color: #ff4444 !important; }
-.btn-text-danger { background: transparent; border: none; color: #ff4444; font-weight: bold; font-size: 11px; text-decoration: underline; cursor: pointer; padding: 5px; }
+.btn-text-danger { background: transparent; border: none; color: #ff4444; font-weight: bold; font-size: 11px; text-decoration: none; cursor: pointer; padding: 5px; }
 .currency-display { background: rgba(0,0,0,0.1); color: inherit; padding: 4px 10px; border-radius: 12px; font-weight: bold; }
 .hidden { display: none !important; }
 
@@ -83,6 +86,12 @@ body {
 .theme-gaming .stamp-cell { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.2); }
 .theme-gaming .stamp-cell.day7 { background: rgba(255,215,0,0.15); }
 
+/* 作るタブのカード一覧用 */
+.admin-card-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-radius: 10px; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); font-size: 13px; font-weight: bold; }
+.admin-card-info { display: flex; align-items: center; gap: 10px; flex: 1; overflow: hidden; }
+.admin-card-img { width: 40px; height: 40px; object-fit: cover; border-radius: 6px; }
+.admin-card-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+
 /* ガチャ画面 */
 .gacha-banner { text-align: center; margin-bottom: 20px; }
 .gacha-pickup-text { font-weight: 900; font-size: 18px; }
@@ -90,7 +99,7 @@ body {
 .gacha-results { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; min-height: 250px; padding: 10px 0; }
 .idle-message { margin-top: 100px; opacity: 0.4; font-weight: bold; font-size: 14px; }
 
-.card { width: 74px; height: 106px; border-radius: 10px; overflow: hidden; background: #222; animation: cardPopIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; position: relative; box-sizing: border-box; cursor: pointer; }
+.card { width: 74px; height: 106px; border-radius: 10px; overflow: hidden; background: #222; animation: cardPopIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; position: relative; cursor: pointer; }
 .card img { width: 100%; height: 100%; object-fit: cover; }
 .card-rarity-tag { position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(0,0,0,0.75); text-align: center; font-size: 9px; font-weight: 900; padding: 3px 0; color: #fff; }
 @keyframes cardPopIn { from { transform: scale(0.4) translateY(30px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
@@ -114,17 +123,20 @@ body {
 .gacha-controls { display: flex; justify-content: space-between; }
 .btn-ticket-trigger { background: linear-gradient(135deg, #ffd700, #ff8c00); color: #222; padding: 12px 25px; border-radius: 25px; font-size: 13px; font-weight: 800; box-shadow: 0 4px 12px rgba(255,215,0,0.3); margin-top: 8px; width: 100%; border: none; cursor: pointer; }
 
-/* 天井交換所リスト */
-.exchange-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; border-radius: 12px; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); }
-.exchange-item-left { display: flex; align-items: center; gap: 10px; }
-.exchange-rarity-tag { font-size: 10px; font-weight: bold; background: #333; color: #fff; padding: 3px 8px; border-radius: 10px; }
-.exchange-name { font-weight: 900; font-size: 14px; }
-.exchange-btn { background: var(--accent-color); color: #fff; border: none; padding: 8px 15px; border-radius: 10px; font-weight: bold; font-size: 11px; cursor: pointer; }
+/* 天井交換所リスト (改良) */
+.exchange-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-radius: 12px; background: rgba(0,0,0,0.05); border: 1px solid rgba(0,0,0,0.1); }
+.exchange-item-left { display: flex; align-items: center; gap: 10px; flex: 1; }
+.exchange-img { width: 36px; height: 36px; object-fit: cover; border-radius: 6px; border: 1px solid rgba(0,0,0,0.1); }
+.exchange-unknown { width: 36px; height: 36px; background: rgba(0,0,0,0.2); border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 18px; opacity: 0.5; }
+.exchange-rarity-tag { font-size: 10px; font-weight: bold; background: #333; color: #fff; padding: 3px 6px; border-radius: 8px; min-width: 28px; text-align: center; }
+.exchange-name-box { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+.exchange-name { font-weight: 900; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.exchange-btn { background: var(--accent-color); color: #fff; border: none; padding: 8px 12px; border-radius: 10px; font-weight: bold; font-size: 11px; cursor: pointer; }
 .exchange-btn:active { transform: scale(0.95); }
 
 /* 図鑑 & モーダル */
 .collection-header { margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px; }
-.collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 10px; padding-bottom: 30px; }
+.collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 10px; padding-bottom: 10px; }
 .item-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; background: rgba(0,0,0,0.4); color: rgba(255,255,255,0.2); font-size: 10px; font-weight: bold; border: 1px dashed rgba(255,255,255,0.2); border-radius: 10px; min-height: 106px; }
 
 .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.75); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
@@ -147,7 +159,7 @@ body {
 .img-preview { display: block; max-height: 70px; object-fit: cover; margin: 5px auto; border-radius: 8px; }
 
 /* ナビゲーション */
-.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; background: var(--panel-bg); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border-top: 1px solid rgba(255,255,255,0.1); display: flex; z-index: 1000; padding-bottom: 12px; box-sizing: border-box; transition: background 0.3s ease; }
+.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; background: var(--panel-bg); backdrop-filter: blur(30px); -webkit-backdrop-filter: blur(30px); border-top: 1px solid rgba(255,255,255,0.1); display: flex; z-index: 1000; padding-bottom: 12px; transition: background 0.3s ease; }
 .nav-btn { flex: 1; background: none; border: none; color: #888; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.2s; }
 .nav-btn .icon { font-size: 20px; margin-bottom: 2px; transition: transform 0.2s; display: flex; align-items: center; justify-content: center; height: 28px; }
 .nav-btn .label { font-size: 9px; font-weight: bold; }

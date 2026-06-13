@@ -56,7 +56,7 @@
             </div>
 
             <div class="panel" style="margin-top: 20px;">
-                <h3 class="panel-title text-center" style="margin-bottom:15px;">🎁 7日間ログインボーナス</h3>
+                <h3 class="panel-title text-center" style="margin-bottom:15px;">🎁 ログインボーナス</h3>
                 <div class="stamp-card-container" id="stamp-card-container"></div>
             </div>
         </section>
@@ -72,35 +72,48 @@
                 </div>
             </div>
 
-            <div class="panel" id="card-create-panel">
-                <h2 class="panel-title">🖼️ 推しカードの実装（追加）</h2>
-                <div class="form-group">
-                    <label>スマホの画像を選ぶ</label>
-                    <input type="file" id="input-card-img" accept="image/*" class="form-input file-input">
+            <!-- 🔒 鍵付きガチャ用の警告エリア -->
+            <div id="admin-locked-warning" class="panel hidden" style="border: 2px solid #ff4444; background: rgba(255,0,0,0.05);">
+                <h2 class="panel-title" style="color: #ff4444;">🔒 ロックされたガチャ</h2>
+                <p style="font-size: 12px; font-weight: bold;">このガチャは「鍵付き」でシェアされたため、中身の確認やカードの編集はできません。（何が出るかはお楽しみです！）</p>
+            </div>
+
+            <div id="admin-editor-section">
+                <div class="panel" id="card-create-panel">
+                    <h2 class="panel-title">🖼️ 推しカードの実装（追加）</h2>
+                    <div class="form-group">
+                        <label>スマホの画像を選ぶ</label>
+                        <input type="file" id="input-card-img" accept="image/*" class="form-input file-input">
+                    </div>
+                    <div class="form-group">
+                        <label>カードの名前</label>
+                        <input type="text" id="input-card-name" placeholder="例: おねむりシナモン" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label>レアリティ (全9段階)</label>
+                        <select id="input-card-rarity" class="form-input">
+                            <option value="SLR">SLR (0.01%)</option>
+                            <option value="LR">LR (0.04%)</option>
+                            <option value="LE">LE (0.15%)</option>
+                            <option value="UR">UR (0.5%)</option>
+                            <option value="SSR">SSR (3.8%)</option>
+                            <option value="SR">SR (10.5%)</option>
+                            <option value="R">R (20%)</option>
+                            <option value="N" selected>N (50%)</option>
+                            <option value="C">C (15%)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>セリフ・説明文（空欄OK）</label>
+                        <input type="text" id="input-card-desc" placeholder="排出時や相棒設定時のセリフ" class="form-input">
+                    </div>
+                    <button id="btn-add-card" class="btn btn-primary w-full">ガチャに実装する！</button>
                 </div>
-                <div class="form-group">
-                    <label>カードの名前</label>
-                    <input type="text" id="input-card-name" placeholder="例: おねむりシナモン" class="form-input">
+
+                <div class="panel">
+                    <h2 class="panel-title">🗂️ 収録カード一覧</h2>
+                    <div id="admin-card-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 250px; overflow-y: auto;"></div>
                 </div>
-                <div class="form-group">
-                    <label>レアリティ (全9段階)</label>
-                    <select id="input-card-rarity" class="form-input">
-                        <option value="SLR">SLR (0.01%)</option>
-                        <option value="LR">LR (0.04%)</option>
-                        <option value="LE">LE (0.15%)</option>
-                        <option value="UR">UR (0.5%)</option>
-                        <option value="SSR">SSR (3.8%)</option>
-                        <option value="SR">SR (10.5%)</option>
-                        <option value="R">R (20%)</option>
-                        <option value="N" selected>N (50%)</option>
-                        <option value="C">C (15%)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>セリフ・説明文（空欄OK）</label>
-                    <input type="text" id="input-card-desc" placeholder="排出時や相棒設定時のセリフ" class="form-input">
-                </div>
-                <button id="btn-add-card" class="btn btn-primary w-full">ガチャに実装する！</button>
             </div>
         </section>
 
@@ -127,7 +140,7 @@
 
         <section id="view-collection" class="view">
             <div class="collection-header">
-                <select id="collection-gacha-selector" class="form-input"></select>
+                <select id="collection-gacha-selector" class="form-input" onchange="renderCollection()"></select>
                 <div class="form-row">
                     <select id="collection-sort-selector" class="form-input flex-1" onchange="renderCollection()">
                         <option value="rarity">✨ レアリティ順</option>
@@ -136,6 +149,8 @@
                 </div>
             </div>
             <div id="collection-grid" class="collection-grid"></div>
+            
+            <button id="btn-reset-collection" class="btn btn-outline hidden" style="border-color:#aaa; color:#aaa; margin-top:40px; margin-bottom: 20px; width:100%; font-size:11px;">🗑️ この図鑑の思い出を手放す（リセット）</button>
         </section>
 
         <section id="view-settings" class="view space-y">
@@ -173,7 +188,7 @@
                 <div class="form-group" style="margin-bottom:20px;">
                     <label>アプリのアイコン（下部メニュー等）を画像にする</label>
                     <input type="file" id="settings-app-icon" accept="image/*" class="form-input file-input" onchange="saveAppIconImage(event)">
-                    <button onclick="clearAppIconImage()" class="btn-text-danger w-full text-center" style="margin-top:5px;">画像を消して「🎁」に戻す</button>
+                    <button onclick="clearAppIconImage()" class="btn-text-danger w-full text-center" style="margin-top:5px;">🗑️ 画像を消して「🎁」に戻す</button>
                 </div>
 
                 <div class="form-group">
@@ -182,7 +197,7 @@
                 </div>
                 <div id="welcome-img-preview-container" class="hidden text-center">
                     <img id="welcome-img-preview" class="img-preview" src="">
-                    <button onclick="clearWelcomeImage()" class="btn-text-danger w-full">スプラッシュ画像を消去する</button>
+                    <button onclick="clearWelcomeImage()" class="btn-text-danger w-full">🗑️ スプラッシュ画像を消去する</button>
                 </div>
             </div>
 
@@ -230,7 +245,7 @@
     <div id="modal-ceiling" class="modal hidden">
         <div class="modal-content" style="max-height:80vh; overflow-y:auto;">
             <h2>🏆 天井マイレージ交換所</h2>
-            <p style="font-size:11px; opacity:0.8; margin-bottom:15px;">5000pt消費して、好きなカードを指名獲得できます。<br>※ネタバレ防止のため画像と名前は伏せられています。</p>
+            <p style="font-size:11px; opacity:0.8; margin-bottom:15px;">5000pt消費して、好きなカードを指名獲得できます。</p>
             <div id="ceiling-list-container" style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;"></div>
             <button onclick="document.getElementById('modal-ceiling').classList.add('hidden')" class="btn btn-outline w-full">閉じる</button>
         </div>
