@@ -2,9 +2,12 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon.png">
+    <link rel="icon" href="icon.png"> 
+    <link rel="manifest" href="manifest.json">
     <title>MY GACHA MAKER</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
@@ -72,7 +75,6 @@
                 </div>
             </div>
 
-            <!-- 🔒 鍵付きガチャ用の警告エリア -->
             <div id="admin-locked-warning" class="panel hidden" style="border: 2px solid #ff4444; background: rgba(255,0,0,0.05);">
                 <h2 class="panel-title" style="color: #ff4444;">🔒 ロックされたガチャ</h2>
                 <p style="font-size: 12px; font-weight: bold;">このガチャは「鍵付き」でシェアされたため、中身の確認やカードの編集はできません。（何が出るかはお楽しみです！）</p>
@@ -80,9 +82,11 @@
 
             <div id="admin-editor-section">
                 <div class="panel" id="card-create-panel">
-                    <h2 class="panel-title">🖼️ 推しカードの実装（追加）</h2>
+                    <h2 class="panel-title">🖼️ 推しカードの実装・編集</h2>
+                    <input type="hidden" id="edit-card-id">
+                    
                     <div class="form-group">
-                        <label>スマホの画像を選ぶ</label>
+                        <label>スマホの画像を選ぶ <span id="edit-img-hint" class="hidden" style="color:#ff4444;">(変更しない場合は空でOK)</span></label>
                         <input type="file" id="input-card-img" accept="image/*" class="form-input file-input">
                     </div>
                     <div class="form-group">
@@ -107,7 +111,10 @@
                         <label>セリフ・説明文（空欄OK）</label>
                         <input type="text" id="input-card-desc" placeholder="排出時や相棒設定時のセリフ" class="form-input">
                     </div>
-                    <button id="btn-add-card" class="btn btn-primary w-full">ガチャに実装する！</button>
+                    <div class="button-group">
+                        <button id="btn-add-card" class="btn btn-primary w-full">ガチャに実装する！</button>
+                        <button id="btn-cancel-edit-card" class="btn btn-outline hidden" onclick="cancelEditCard()">キャンセル</button>
+                    </div>
                 </div>
 
                 <div class="panel">
@@ -213,7 +220,7 @@
 
             <div class="panel" style="border: 2px solid var(--accent-color);">
                 <h2 class="panel-title">💾 究極のデータバックアップ</h2>
-                <p style="font-size:10px; opacity:0.7; margin-bottom:10px;">アプリの全データを「ファイル」として安全に書き出します。機種変更や友達へのデータまるごと譲渡に使えます！</p>
+                <p style="font-size:10px; opacity:0.7; margin-bottom:10px; color:#ff4444; font-weight:bold;">※iPhone(Safari)は7日間アクセスしないとデータが消去される仕様があります。必ず「ホーム画面に追加」からアプリ化してください。</p>
                 <button onclick="exportData()" class="btn btn-primary w-full" style="margin-bottom:10px;">📥 データを書き出す (保存)</button>
                 <label class="btn btn-outline w-full text-center" style="display:block; cursor:pointer;">
                     📤 ファイルからデータを復元する
@@ -222,11 +229,16 @@
             </div>
 
             <div class="panel">
-                <h2 class="panel-title">☁️ クラウド連携 (GASサプライズ用)</h2>
+                <h2 class="panel-title">☁️ クラウド連携 (GAS)</h2>
                 <div class="form-group">
                     <input type="text" id="gas-url" class="form-input text-xs" placeholder="GASのURLを貼り付け">
                 </div>
-                <button onclick="saveGasUrl()" class="btn btn-outline w-full" style="font-size:12px;">URLを保存</button>
+                <div class="button-group" style="margin-top:10px;">
+                    <button onclick="saveGasUrl()" class="btn btn-outline" style="font-size:12px;">URL保存</button>
+                    <button onclick="triggerManualSync()" class="btn btn-share" style="font-size:12px;">☁️ 手動同期</button>
+                </div>
+                <hr style="border:0; border-top:1px solid rgba(0,0,0,0.1); margin:20px 0;">
+                <button onclick="resetData()" class="btn-text-danger w-full" style="text-align:center;">🗑️ アプリの全データをリセット</button>
             </div>
         </section>
 
@@ -243,11 +255,11 @@
     </div>
 
     <div id="modal-ceiling" class="modal hidden">
-        <div class="modal-content" style="max-height:80vh; overflow-y:auto;">
+        <div class="modal-content" style="max-height:85vh; overflow-y:auto;">
             <h2>🏆 天井マイレージ交換所</h2>
             <p style="font-size:11px; opacity:0.8; margin-bottom:15px;">5000pt消費して、好きなカードを指名獲得できます。</p>
             <div id="ceiling-list-container" style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;"></div>
-            <button onclick="document.getElementById('modal-ceiling').classList.add('hidden')" class="btn btn-outline w-full">閉じる</button>
+            <button onclick="closeAppModal('modal-ceiling')" class="btn btn-outline w-full">閉じる</button>
         </div>
     </div>
 
@@ -263,7 +275,7 @@
             <p id="modal-card-desc" class="modal-desc"></p>
             <div class="modal-actions">
                 <button id="btn-set-partner" class="btn btn-outline">🏠 ホームの相棒にする</button>
-                <button id="btn-close-modal" class="btn btn-close">閉じる</button>
+                <button id="btn-close-modal" class="btn btn-close" onclick="closeAppModal('modal-card-detail')">閉じる</button>
             </div>
         </div>
     </div>
