@@ -64,6 +64,7 @@
             </div>
         </section>
 
+        <!-- ⚙️ 作る（管理・編集画面） -->
         <section id="view-admin" class="view">
             <div class="panel">
                 <h2 class="panel-title">📦 ガチャの切り替え・管理</h2>
@@ -75,11 +76,10 @@
                 </div>
             </div>
 
-            <div id="admin-locked-warning" class="panel hidden" style="border: 2px solid #ff4444; background: rgba(255,0,0,0.05);">
-                <h2 class="panel-title" style="color: #ff4444;">🔒 ロックされたガチャ</h2>
-                <p style="font-size: 12px; font-weight: bold;">このガチャは「鍵付き」でシェアされたため、中身の確認やカードの編集はできません。（何が出るかはお楽しみです！）</p>
-            </div>
+            <!-- 🔒 共有（閲覧専用）ガチャの場合に表示される警告エリア -->
+            <div id="admin-locked-warning" class="hidden"></div>
 
+            <!-- ✏️ 作成者本人のみ編集できるエリア（シェアされた人には隠れる） -->
             <div id="admin-editor-section">
                 <div class="panel" id="card-create-panel">
                     <h2 class="panel-title">🖼️ 推しカードの実装・編集</h2>
@@ -209,19 +209,18 @@
             </div>
 
             <div class="panel">
-    <h2 class="panel-title">🖼️ 保存画質モード</h2>
-    <p style="font-size:10px; opacity:0.7; margin-bottom:10px;">大容量倉庫（IndexedDB）を搭載したため、超高画質でも数千枚入るようになりました！</p>
-    <select id="image-quality-selector" class="form-input" onchange="changeImageQuality(this.value)">
-        <option value="high">超高画質 (推奨)</option>
-        <option value="standard" selected>標準</option>
-        <option value="eco">エコ (超軽量化)</option>
-    </select>
-    
-    <!-- 🔽 ここに以下のボタンを追加 🔽 -->
-    <button onclick="optimizeAllExistingImages()" class="btn btn-outline w-full" style="margin-top:12px; font-size:11px;">
-        🧹 すでに登録済みのカード画像をまとめて軽量化する
-    </button>
-</div>
+                <h2 class="panel-title">🖼️ 保存画質モード</h2>
+                <p style="font-size:10px; opacity:0.7; margin-bottom:10px;">大容量倉庫（IndexedDB）を搭載したため、超高画質でも数千枚入るようになりました！</p>
+                <select id="image-quality-selector" class="form-input" onchange="changeImageQuality(this.value)">
+                    <option value="high">超高画質 (推奨)</option>
+                    <option value="standard" selected>標準</option>
+                    <option value="eco">エコ (超軽量化)</option>
+                </select>
+                
+                <button onclick="optimizeAllExistingImages()" class="btn btn-outline w-full" style="margin-top:12px; font-size:11px;">
+                    🧹 すでに登録済みのカード画像をまとめて軽量化する
+                </button>
+            </div>
 
             <div class="panel" style="border: 2px solid var(--accent-color);">
                 <h2 class="panel-title">💾 究極のデータバックアップ</h2>
@@ -249,6 +248,7 @@
 
     </main>
 
+    <!-- モーダル群 (すべて body の内側に配置) -->
     <div id="modal-surprise" class="modal hidden">
         <div class="modal-content">
             <h2>🎁 サプライズガチャ到着！</h2>
@@ -285,6 +285,21 @@
         </div>
     </div>
 
+    <!-- 🔗 共有URLモーダル（正しい位置に格納） -->
+    <div id="modal-share-url" class="modal hidden">
+        <div class="modal-content" style="text-align: center;">
+            <h2>🔗 ガチャ共有URLが完成！</h2>
+            <p style="font-size: 11px; opacity: 0.8; margin-bottom: 12px;">以下のURLをコピーして友達や他端末に送ると、このガチャを読み込めます。</p>
+            
+            <textarea id="share-url-textarea" readonly style="width:100%; height:80px; font-size:11px; padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.2); background:#f9f9f9; resize:none; word-break:break-all;"></textarea>
+            
+            <div style="margin-top:15px; display:flex; flex-direction:column; gap:8px;">
+                <button id="btn-copy-share-url" class="btn btn-gacha" style="width:100%;">📋 URLを全コピーする</button>
+                <button onclick="closeAppModal('modal-share-url')" class="btn btn-outline" style="width:100%;">閉じる</button>
+            </div>
+        </div>
+    </div>
+
     <nav class="bottom-nav">
         <button class="nav-btn active" data-target="view-home"><span class="icon">🏠</span><br><span class="label">ホーム</span></button>
         <button class="nav-btn" data-target="view-admin"><span class="icon">⚙️</span><br><span class="label">作る</span></button>
@@ -296,20 +311,3 @@
     <script src="app.js"></script>
 </body>
 </html>
-
-
-<!-- 🔗 共有URLモーダル -->
-<div id="modal-share-url" class="modal-overlay hidden">
-    <div class="modal-content" style="text-align: center;">
-        <h2>🔗 ガチャ共有URLが完成！</h2>
-        <p style="font-size: 11px; opacity: 0.8; margin-bottom: 12px;">以下のURLをコピーして友達や他端末に送ると、このガチャを読み込めます。</p>
-        
-        <!-- 一括選択・コピーしやすいテキストエリア -->
-        <textarea id="share-url-textarea" readonly style="width:100%; height:80px; font-size:11px; padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.2); background:#f9f9f9; resize:none; word-break:break-all;"></textarea>
-        
-        <div style="margin-top:15px; display:flex; flex-direction:column; gap:8px;">
-            <button id="btn-copy-share-url" class="btn btn-gacha" style="width:100%;">📋 URLを全コピーする</button>
-            <button onclick="closeAppModal('modal-share-url')" class="btn btn-outline" style="width:100%;">閉じる</button>
-        </div>
-    </div>
-</div>
