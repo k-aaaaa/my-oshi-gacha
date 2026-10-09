@@ -539,6 +539,79 @@ if(document.getElementById('btn-share-gacha-gas')) {
     });
 }
 
+// 🔗 ガチャ共有URL発行＆一括コピー処理
+if(document.getElementById('btn-share-gacha-gas')) {
+    document.getElementById('btn-share-gacha-gas').onclick = async () => {
+        vibrate();
+        if(isPulling) return;
+        if(!GAS_URL) return alert("⚠️ 設定画面からGASのURLを登録してください！");
+        
+        const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
+        if (!currentGacha || currentGacha.cards.length === 0) return alert("カードが1枚もありません！");
+        
+        const exportGacha = JSON.parse(JSON.stringify(currentGacha));
+        exportGacha.isLocked = confirm("🔒 このガチャに編集ロック（鍵）をかけますか？\n（OKでロック、キャンセルで編集可能のまま共有）");
+        
+        const btn = document.getElementById('btn-share-gacha-gas');
+        btn.innerText = "⏳ 共有URL発行中...";
+        btn.disabled = true;
+        isPulling = true;
+
+        const shareId = "share_" + Date.now();
+        const payload = { action: "saveShare", shareId: shareId, gachaData: exportGacha };
+        
+        try {
+            const res = await fetch(GAS_URL, { 
+                method: "POST", 
+                body: JSON.stringify(payload), 
+                headers: { "Content-Type": "text/plain" } 
+            });
+            const result = await res.json();
+
+            if(result.status === "success") {
+                // 完全な絶対パスURLを生成
+                const baseUrl = window.location.href.split('?')[0].split('#')[0];
+                const shareUrl = `${baseUrl}?surprise=${shareId}&api=${encodeURIComponent(GAS_URL)}`;
+                
+                // モーダルにセット
+                const textarea = document.getElementById('share-url-textarea');
+                const copyBtn = document.getElementById('btn-copy-share-url');
+                
+                if (textarea) {
+                    textarea.value = shareUrl;
+                }
+
+                if (copyBtn) {
+                    copyBtn.onclick = () => {
+                        vibrate();
+                        if (textarea) {
+                            textarea.select();
+                            textarea.setSelectionRange(0, 99999); // スマホ対応
+                        }
+                        navigator.clipboard.writeText(shareUrl).then(() => {
+                            alert("📋 共有URLをクリップボードに全コピーしました！");
+                        }).catch(() => {
+                            alert("テキストエリアを選択してコピーしてください。");
+                        });
+                    };
+                }
+
+                openAppModal('modal-share-url');
+            } else {
+                alert("⚠️ GAS側で保存エラーが発生しました: " + (result.message || 'データが大きすぎる可能性があります'));
+            }
+        } catch(e) { 
+            console.error("共有エラー:", e);
+            alert("⚠️ 通信に失敗しました。インターネット接続やGASのURLを確認してください。"); 
+        } finally { 
+            btn.innerText = "🔗 シェア"; 
+            btn.disabled = false;
+            isPulling = false;
+        }
+    };
+}
+
+// 🎁 共有URLで開かれた時の自動読み込み＆対象ガチャへの自動遷移
 async function checkSurpriseShare() {
     const urlParams = new URLSearchParams(window.location.search);
     const surpriseId = urlParams.get('surprise');
@@ -549,23 +622,49 @@ async function checkSurpriseShare() {
         try {
             const res = await fetch(activeGasUrl + "?action=getShare&shareId=" + surpriseId);
             const result = await res.json();
+            
             if(result.status === "success" && result.data) {
                 const importedGacha = result.data;
+                
                 openAppModal('modal-surprise');
-                document.getElementById('btn-surprise-open').onclick = () => {
-                    vibrate();
-                    importedGacha.id = 'imported_' + Date.now(); 
-                    state.gachas.push(importedGacha); 
-                    state.currentGachaId = importedGacha.id; 
-                    state.stones += 3000; 
-                    saveLocal(); renderGachaSelectors(); renderAdminView();
-                    closeAppModal('modal-surprise');
-                    window.history.replaceState({}, document.title, window.location.pathname);
-                    switchTab('view-gacha', true);
-                    setTimeout(() => alert("✨ 石を3000個プレゼント！今すぐ引いてみよう！"), 500);
-                };
+                
+                const openBtn = document.getElementById('btn-surprise-open');
+                if (openBtn) {
+                    openBtn.onclick = async () => {
+                        vibrate();
+                        
+                        // IDが重複しないように新規作成してインポート
+                        const newId = 'imported_' + Date.now();
+                        importedGacha.id = newId;
+                        
+                        // ガチャを追加して、カレントID（表示対象）をそのガチャに変更
+                        state.gachas.push(importedGacha); 
+                        state.currentGachaId = newId; 
+                        state.stones += 3000; // 特典
+                        
+                        // 保存と画面描画の同期
+                        await saveLocal(); 
+                        renderGachaSelectors(); 
+                        renderAdminView();
+                        
+                        closeAppModal('modal-surprise');
+                        
+                        // URLパラメータをクリア
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        
+                        // ガチャ画面に自動移動して表示更新
+                        switchTab('view-gacha', true);
+                        renderGachaScreen();
+                        
+                        setTimeout(() => alert(`✨ ガチャ「${importedGacha.title}」を読み込みました！\n💎 石3,000個をプレゼント！`), 300);
+                    };
+                }
+            } else {
+                alert("⚠️ 共有データの取得に失敗したか、期限切れです。");
             }
-        } catch(e) {}
+        } catch(e) {
+            console.error("共有ガチャ受信エラー:", e);
+        }
     }
 }
 
