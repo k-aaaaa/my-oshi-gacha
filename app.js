@@ -625,7 +625,19 @@ async function checkSurpriseShare() {
                         switchTab('view-gacha', true);
                         renderGachaScreen();
                         
-                        setTimeout(() => alert(`✨ ガチャ「${importedGacha.title}」を受け取りました！\n💎 石10,000個をプレゼント！`), 300);
+                        // 🎉 画面切り替え直後に紙吹雪（クラッカー演出）をドカンと発火！
+                        setTimeout(() => {
+                            fireConfetti({
+                                particleCount: 120,
+                                spread: 100,
+                                origin: { y: 0.6 }
+                            });
+                            vibrate();
+                        }, 100);
+
+                        setTimeout(() => {
+                            alert(`✨ ガチャ「${importedGacha.title}」を受け取りました！\n💎 石10,000個をプレゼント！`);
+                        }, 400);
                     };
                 }
             } else {
@@ -636,7 +648,6 @@ async function checkSurpriseShare() {
         }
     }
 }
-
 function checkLoginBonus() {
     const todayStr = new Date().toLocaleDateString('ja-JP');
     if (state.lastLoginDate === todayStr) return; 
