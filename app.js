@@ -1056,32 +1056,81 @@ function renderCollection() {
     const currentGacha = getGachaById(selEl.value);
     if (!currentGacha) return;
 
+    if (!currentGacha.cards || currentGacha.cards.length === 0) {
+        grid.innerHTML = `<p style="text-align:center; opacity:0.5; padding:30px; grid-column:1/-1;">このガチャにはカードがありません。</p>`;
+        return;
+    }
+
     const sortType = document.getElementById('collection-sort-selector') ? document.getElementById('collection-sort-selector').value : 'rarity';
     const inv = state.inventory[currentGacha.id] || {};
     const rarityOrder = ['SLR', 'LR', 'LE', 'UR', 'SSR', 'SR', 'R', 'N', 'C'];
 
-    let cards = [...currentGacha.cards];
+    // -----------------------------------------------------------
+    // 🏷️ レアリティ順（グループ分け表示）
+    // -----------------------------------------------------------
     if (sortType === 'rarity') {
-        cards.sort((a, b) => rarityOrder.indexOf(a.rarity) - rarityOrder.indexOf(b.rarity));
-    } else if (sortType === 'newest') {
-        cards.reverse();
+        rarityOrder.forEach(rarity => {
+            // 対象レアリティのカードを抽出
+            const cardsInRarity = currentGacha.cards.filter(c => c.rarity === rarity);
+            if (cardsInRarity.length === 0) return; // 該当レアリティのカードがなければスキップ
+
+            const gotCount = cardsInRarity.filter(c => (inv[c.id] || 0) > 0).length;
+
+            // ✨ レアリティごとの見出しヘッダーを作成
+            const sectionHeader = document.createElement('div');
+            sectionHeader.style.cssText = `
+                grid-column: 1 / -1;
+                margin-top: 15px;
+                margin-bottom: 5px;
+                padding: 6px 12px;
+                background: rgba(0, 0, 0, 0.05);
+                border-left: 4px solid var(--accent-color, #1d1d1f);
+                border-radius: 4px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                font-weight: bold;
+                font-size: 13px;
+            `;
+            sectionHeader.innerHTML = `
+                <span>【${rarity}】</span>
+                <span style="font-size:11px; opacity:0.7;">所持: ${gotCount} / ${cardsInRarity.length}</span>
+            `;
+            grid.appendChild(sectionHeader);
+
+            // カードカード群を追加
+            cardsInRarity.forEach(card => {
+                const count = inv[card.id] || 0;
+                const div = document.createElement('div');
+                if (count > 0) {
+                    div.className = `card ${card.rarity}`;
+                    div.innerHTML = `<img src="${escapeHTML(card.img)}" alt="${escapeHTML(card.name)}" onerror="this.src='${FALLBACK_IMG}'"><div class="card-rarity-tag">${card.rarity}</div>`;
+                    div.onclick = () => openCardDetailModal(currentGacha.id, card.id);
+                } else {
+                    div.className = 'item-empty';
+                    div.innerText = '❓ 未獲得';
+                }
+                grid.appendChild(div);
+            });
+        });
+    } else {
+        // 🆕 新しく追加された順（従来の一覧表示）
+        let cards = [...currentGacha.cards].reverse();
+        cards.forEach(card => {
+            const count = inv[card.id] || 0;
+            const div = document.createElement('div');
+            if (count > 0) {
+                div.className = `card ${card.rarity}`;
+                div.innerHTML = `<img src="${escapeHTML(card.img)}" alt="${escapeHTML(card.name)}" onerror="this.src='${FALLBACK_IMG}'"><div class="card-rarity-tag">${card.rarity}</div>`;
+                div.onclick = () => openCardDetailModal(currentGacha.id, card.id);
+            } else {
+                div.className = 'item-empty';
+                div.innerText = '❓ 未獲得';
+            }
+            grid.appendChild(div);
+        });
     }
-
-    cards.forEach(card => {
-        const count = inv[card.id] || 0;
-        const div = document.createElement('div');
-        if (count > 0) {
-            div.className = `card ${card.rarity}`;
-            div.innerHTML = `<img src="${escapeHTML(card.img)}" alt="${escapeHTML(card.name)}" onerror="this.src='${FALLBACK_IMG}'"><div class="card-rarity-tag">${card.rarity}</div>`;
-            div.onclick = () => openCardDetailModal(currentGacha.id, card.id);
-        } else {
-            div.className = 'item-empty';
-            div.innerText = '❓ 未獲得';
-        }
-        grid.appendChild(div);
-    });
 }
-
 function openCardDetailModal(gachaId, cardId) {
     const gacha = getGachaById(gachaId);
     if (!gacha) return;
