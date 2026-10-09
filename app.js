@@ -1075,8 +1075,9 @@ function renderCollection() {
             if (cardsInRarity.length === 0) return; // 該当レアリティのカードがなければスキップ
 
             const gotCount = cardsInRarity.filter(c => (inv[c.id] || 0) > 0).length;
+            const totalCount = cardsInRarity.length;
 
-            // ✨ レアリティごとの見出しヘッダーを作成
+            // ✨ レアリティごとの見出しヘッダー
             const sectionHeader = document.createElement('div');
             sectionHeader.style.cssText = `
                 grid-column: 1 / -1;
@@ -1094,11 +1095,11 @@ function renderCollection() {
             `;
             sectionHeader.innerHTML = `
                 <span>【${rarity}】</span>
-                <span style="font-size:11px; opacity:0.7;">所持: ${gotCount} / ${cardsInRarity.length}</span>
+                <span style="font-size:11px; opacity:0.8;">コンプ率: ${gotCount} / ${totalCount} 種類</span>
             `;
             grid.appendChild(sectionHeader);
 
-            // カードカード群を追加
+            // カード一覧を追加
             cardsInRarity.forEach(card => {
                 const count = inv[card.id] || 0;
                 const div = document.createElement('div');
@@ -1107,8 +1108,13 @@ function renderCollection() {
                     div.innerHTML = `<img src="${escapeHTML(card.img)}" alt="${escapeHTML(card.name)}" onerror="this.src='${FALLBACK_IMG}'"><div class="card-rarity-tag">${card.rarity}</div>`;
                     div.onclick = () => openCardDetailModal(currentGacha.id, card.id);
                 } else {
+                    // 未獲得カードの表示 (枠とカード名をうっすら表示)
                     div.className = 'item-empty';
-                    div.innerText = '❓ 未獲得';
+                    div.style.cssText = 'display:flex; flex-direction:column; justify-content:center; align-items:center; font-size:10px; opacity:0.6; padding:4px; text-align:center;';
+                    div.innerHTML = `
+                        <div style="font-size:16px; margin-bottom:2px;">❓</div>
+                        <div style="font-size:9px; word-break:break-all;">${escapeHTML(card.name || '未獲得')}</div>
+                    `;
                 }
                 grid.appendChild(div);
             });
@@ -1125,12 +1131,17 @@ function renderCollection() {
                 div.onclick = () => openCardDetailModal(currentGacha.id, card.id);
             } else {
                 div.className = 'item-empty';
-                div.innerText = '❓ 未獲得';
+                div.style.cssText = 'display:flex; flex-direction:column; justify-content:center; align-items:center; font-size:10px; opacity:0.6; padding:4px; text-align:center;';
+                div.innerHTML = `
+                    <div style="font-size:16px; margin-bottom:2px;">❓</div>
+                    <div style="font-size:9px; word-break:break-all;">${escapeHTML(card.name || '未獲得')}</div>
+                `;
             }
             grid.appendChild(div);
         });
     }
 }
+
 function openCardDetailModal(gachaId, cardId) {
     const gacha = getGachaById(gachaId);
     if (!gacha) return;
