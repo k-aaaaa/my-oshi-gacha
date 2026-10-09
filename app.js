@@ -1148,3 +1148,91 @@ function sharePullResult() {
         prompt("以下のテキストをコピーしてください:", lastPullShareText);
     });
 }
+
+
+// 🧹 すでに登録済みのカード画像をすべて自動で軽量化（圧縮・リサイズ）する機能
+async function optimizeAllExistingImages() {
+    vibrate();
+    if (!state || !state.gachas || state.gachas.length === 0) {
+        return alert("ガチャデータがありません。");
+    }
+
+    // 全ガチャの全カードを集計
+    let allCards = [];
+    state.gachas.forEach(gacha => {
+        if (gacha.cards && gacha.cards.length > 0) {
+            gacha.cards.forEach(card => {
+                allCards.push({ gachaId: gacha.id, card: card });
+            });
+        }
+    });
+
+    if (allCards.length === 0) {
+        return alert("圧縮対象のカード画像がありません。");
+    }
+
+    if (!confirm(`登録済みのカード画像（全${allCards.length}枚）を一括で圧縮・リサイズして軽量化しますか？\n\n※見た目の画質を保ったまま、アプリ動作や通信量を劇的に軽くします。`)) {
+        return;
+    }
+
+    const qualityMap = { 
+        'high': { width: 600, quality: 0.7 },
+        'standard': { width: 450, quality: 0.55 },
+        'eco': { width: 300, quality: 0.4 }
+    };
+    const settings = qualityMap[state.imageQuality] || qualityMap['standard'];
+
+    let processCount = 0;
+    
+    // プログレス表示用のメッセージを作成（簡易表示）
+    const btn = document.activeElement;
+    const originalText = btn ? btn.innerText : "";
+    if (btn) btn.innerText = `⏳ 圧縮中 (0/${allCards.length})...`;
+
+    for (let i = 0; i < allCards.length; i++) {
+        const item = allCards[i];
+        const card = item.card;
+
+        if (btn) btn.innerText = `⏳ 圧縮中 (${i + 1}/${allCards.length})...`;
+
+        // URLリンク（http〜）ではなく、Base64データとして保存されている重い画像のみ再圧縮
+        if (card.img && card.img.startsWith('data:image/')) {
+            try {
+                const compressedImg = await new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let scale = 1;
+                        if (img.width > settings.width) {
+                            scale = settings.width / img.width;
+                        }
+                        canvas.width = img.width * scale;
+                        canvas.height = img.height * scale;
+
+                        const ctx = canvas.getContext('2d');
+                        ctx.fillStyle = '#FFFFFF';
+                        ctx.fillRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                        resolve(canvas.toDataURL('image/jpeg', settings.quality));
+                    };
+                    img.onerror = () => resolve(card.img); // 読み込み失敗時は維持
+                    img.src = card.img;
+                });
+
+                card.img = compressedImg;
+                processCount++;
+            } catch (e) {
+                console.warn("画像の圧縮に失敗:", card.name, e);
+            }
+        }
+    }
+
+    // データベース（IndexedDB）を保存＆画面更新
+    await saveLocal();
+    if (typeof renderAdminView === 'function') renderAdminView();
+    if (typeof renderCollection === 'function') renderCollection();
+
+    if (btn) btn.innerText = originalText;
+    alert(`✨ 既存のカード画像（全${allCards.length}枚）の軽量化が完了しました！\nデータサイズが劇的に軽くなりました。`);
+}
