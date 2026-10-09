@@ -541,7 +541,7 @@ if(document.getElementById('btn-share-gacha-gas')) {
     });
 }
 
-// 🎁 共有ガチャ受信＆受取処理（重複受け取り防止＆自動スキップ対応）
+// 🎁 共有ガチャ受信＆受取処理（通信エラー対策強化版）
 async function checkSurpriseShare() {
     const urlParams = new URLSearchParams(window.location.search);
     const surpriseId = urlParams.get('surprise');
@@ -554,12 +554,10 @@ async function checkSurpriseShare() {
     const alreadyImported = state.gachas.find(g => g.shareId === surpriseId || g.id === 'imported_' + surpriseId);
     
     if (alreadyImported) {
-        // 既に持っている場合はモーダルを出さずに、そのガチャを直接開く
         state.currentGachaId = alreadyImported.id;
         state.isGuestMode = true;
         await saveLocal();
         
-        // URLのパラメータを綺麗に削除して自然な状態にする
         window.history.replaceState({}, document.title, window.location.pathname);
         
         applyGuestModeUI();
@@ -569,76 +567,82 @@ async function checkSurpriseShare() {
         return;
     }
 
-    // 未受け取りの場合のみGASからデータ取得
-    if (activeGasUrl) {
-        try {
-            const res = await fetch(activeGasUrl + "?action=getShare&shareId=" + surpriseId);
-            const result = await res.json();
-            
-            const importedGacha = result.data || (result.cards ? result : null);
+    if (!activeGasUrl) {
+        alert("⚠️ GASのURLが設定されていません。");
+        return;
+    }
 
-            if (result.status === "success" && importedGacha) {
-                openAppModal('modal-surprise');
-                
-                const openBtn = document.getElementById('btn-surprise-open');
-                if (openBtn) {
-                    openBtn.onclick = async () => {
-                        vibrate();
-                        
-                        const newId = 'imported_' + surpriseId;
-                        importedGacha.id = newId;
-                        importedGacha.shareId = surpriseId; // 共有IDを識別子として保持
-                        importedGacha.isLocked = true;
-                        
-                        state.isGuestMode = true; 
-                        
-                        const existingIdx = state.gachas.findIndex(g => g.id === newId);
-                        if (existingIdx >= 0) {
-                            state.gachas[existingIdx] = importedGacha;
-                        } else {
-                            state.gachas.push(importedGacha);
-                        }
-
-                        state.currentGachaId = newId; 
-                        state.stones = (state.stones || 0) + 10000; 
-                        
-                        await saveLocal(); 
-                        
-                        closeAppModal('modal-surprise');
-                        
-                        // URLのパラメータをきれいに削除
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                        
-                        applyGuestModeUI();
-                        renderGachaSelectors(); 
-                        switchTab('view-gacha', false);
-                        renderGachaScreen();
-                        
-                        // 🎉 初回受け取り時のみクラッカー演出
-                        setTimeout(() => {
-                            fireConfetti({
-                                particleCount: 120,
-                                spread: 100,
-                                origin: { y: 0.6 }
-                            });
-                            vibrate();
-                        }, 100);
-
-                        setTimeout(() => {
-                            alert(`✨ ガチャ「${importedGacha.title}」を受け取りました！\n💎 石10,000個をプレゼント！`);
-                        }, 400);
-                    };
-                }
-            } else {
-                alert("⚠️ 共有データの取得に失敗したか、期限切れです。");
-            }
-        } catch(e) {
-            console.error("共有ガチャ受信エラー:", e);
-            alert("⚠️ ネットワークエラー等により共有ガチャが受け取れませんでした。");
+    try {
+        // 💡 GASのリダイレクト(302)を確実につかむため redirect: 'follow' を追加
+        const res = await fetch(`${activeGasUrl}?action=getShare&shareId=${surpriseId}`, {
+            method: 'GET',
+            redirect: 'follow'
+        });
+        
+        if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`);
         }
+
+        const result = await res.json();
+        const importedGacha = result.data;
+
+        if (result.status === "success" && importedGacha) {
+            openAppModal('modal-surprise');
+            
+            const openBtn = document.getElementById('btn-surprise-open');
+            if (openBtn) {
+                openBtn.onclick = async () => {
+                    vibrate();
+                    
+                    const newId = 'imported_' + surpriseId;
+                    importedGacha.id = newId;
+                    importedGacha.shareId = surpriseId;
+                    importedGacha.isLocked = true;
+                    
+                    state.isGuestMode = true; 
+                    
+                    const existingIdx = state.gachas.findIndex(g => g.id === newId);
+                    if (existingIdx >= 0) {
+                        state.gachas[existingIdx] = importedGacha;
+                    } else {
+                        state.gachas.push(importedGacha);
+                    }
+
+                    state.currentGachaId = newId; 
+                    state.stones = (state.stones || 0) + 10000; 
+                    
+                    await saveLocal(); 
+                    
+                    closeAppModal('modal-surprise');
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    
+                    applyGuestModeUI();
+                    renderGachaSelectors(); 
+                    switchTab('view-gacha', false);
+                    renderGachaScreen();
+                    
+                    setTimeout(() => {
+                        fireConfetti({
+                            particleCount: 120,
+                            spread: 100,
+                            origin: { y: 0.6 }
+                        });
+                        vibrate();
+                    }, 100);
+
+                    setTimeout(() => {
+                        alert(`✨ ガチャ「${importedGacha.title}」を受け取りました！\n💎 石10,000個をプレゼント！`);
+                    }, 400);
+                };
+            }
+        } else {
+            alert("⚠️ 共有データの取得に失敗したか、期限切れ・存在しないデータです。");
+        }
+    } catch(e) {
+        console.error("共有ガチャ受信エラー:", e);
+        alert("⚠️ ネットワークエラー等により共有ガチャが受け取れませんでした。\n(GASのアクセス権限またはデプロイバージョンをご確認ください)");
     }
 }
-
 function checkLoginBonus() {
     const todayStr = new Date().toLocaleDateString('ja-JP');
     if (state.lastLoginDate === todayStr) return; 
