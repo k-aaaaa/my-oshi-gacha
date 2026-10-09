@@ -73,7 +73,7 @@ const defaultState = {
     archivedGachas: [], 
     currentGachaId: 'default',
     inventory: {},    
-    stones: 3000,      
+    stones: 10000,      
     totalSpent: 0,
     loginDays: 0,
     lastLoginDate: "",
@@ -115,7 +115,6 @@ function closeAppModal(id) {
     document.body.classList.remove('modal-open'); 
 }
 
-// 🔒 共有受け取りユーザー（ゲスト）の場合、「作る」タブを画面から消去する関数
 function applyGuestModeUI() {
     const currentGacha = state ? state.gachas.find(g => g.id === state.currentGachaId) : null;
     const adminNavBtn = document.querySelector('.nav-btn[data-target="view-admin"]');
@@ -415,7 +414,6 @@ function triggerManualSync() {
     .catch(() => alert("⚠️ 通信に失敗しました。"));
 }
 
-// 🛡️ 超安全画像圧縮処理
 async function processCardImageUpload(file) {
     const qualityMap = { 
         'high': { width: 500, quality: 0.65 },
@@ -474,7 +472,6 @@ async function processCardImageUpload(file) {
     return compressedBase64;
 }
 
-// 🧹 一括軽量化
 async function optimizeAllExistingImages() {
     vibrate();
     if (!state || !state.gachas || state.gachas.length === 0) return alert("データがありません");
@@ -530,7 +527,6 @@ async function optimizeAllExistingImages() {
     alert(`✨ ${successCount}枚の画像を軽量化しました！`);
 }
 
-// 🔗 ガチャ共有URL発行（閲覧専用ロック）
 if(document.getElementById('btn-share-gacha-gas')) {
     document.getElementById('btn-share-gacha-gas').addEventListener('click', async () => {
         vibrate();
@@ -540,7 +536,7 @@ if(document.getElementById('btn-share-gacha-gas')) {
         if (!currentGacha || currentGacha.cards.length === 0) return alert("カードが1枚もありません！");
         
         const exportGacha = JSON.parse(JSON.stringify(currentGacha));
-        exportGacha.isLocked = true; // シェアされた人は自動的に編集不可
+        exportGacha.isLocked = true;
         
         const btn = document.getElementById('btn-share-gacha-gas');
         btn.innerText = "⏳ 準備中...";
@@ -586,7 +582,6 @@ if(document.getElementById('btn-share-gacha-gas')) {
     });
 }
 
-// 🎁 共有URL自動受取＆自動遷移
 async function checkSurpriseShare() {
     const urlParams = new URLSearchParams(window.location.search);
     const surpriseId = urlParams.get('surprise');
@@ -612,11 +607,11 @@ async function checkSurpriseShare() {
                         importedGacha.id = newId;
                         importedGacha.isLocked = true;
                         
-                        state.isGuestMode = true; // ゲストフラグON
+                        state.isGuestMode = true;
                         
                         state.gachas.push(importedGacha); 
                         state.currentGachaId = newId; 
-                        state.stones += 3000; 
+                        state.stones += 10000; 
                         
                         await saveLocal(); 
                         renderGachaSelectors(); 
@@ -624,11 +619,11 @@ async function checkSurpriseShare() {
                         closeAppModal('modal-surprise');
                         window.history.replaceState({}, document.title, window.location.pathname);
                         
-                        applyGuestModeUI(); // 作るタブを消去
+                        applyGuestModeUI();
                         switchTab('view-gacha', true);
                         renderGachaScreen();
                         
-                        setTimeout(() => alert(`✨ ガチャ「${importedGacha.title}」を受け取りました！\n💎 石3,000個をプレゼント！`), 300);
+                        setTimeout(() => alert(`✨ ガチャ「${importedGacha.title}」を受け取りました！\n💎 石10,000個をプレゼント！`), 300);
                     };
                 }
             } else {
@@ -655,7 +650,7 @@ function checkLoginBonus() {
     let totalStones = 0; let earnedTickets = { ssr: 0, ur: 0, le: 0, lr: 0, slr: 0 };
     for(let i=0; i<daysToCatchUp; i++){
         state.loginDays += 1; const cycleDay = ((state.loginDays - 1) % 28) + 1;
-        totalStones += 3000; 
+        totalStones += 10000; 
         if (cycleDay === 3) earnedTickets.ssr += 1;
         if (cycleDay === 6) earnedTickets.ur += 1;
         if (cycleDay === 7) { earnedTickets.le += 1; totalStones += 10000; }
@@ -676,9 +671,9 @@ function renderStampCard() {
     
     for(let i = 0; i < 7; i++) {
         const dayNum = weekStart + i; const isClaimed = state.loginDays > 0 && current28CycleDay >= dayNum;
-        let label = "💎3000";
-        if(dayNum===3) label="🎫SSR"; if(dayNum===6) label="🎫UR"; if(dayNum===7) label="🎫LE\n💎1万";
-        if(dayNum===14) label="🎫LR"; if(dayNum===21) label="🎫LE\n💎1万"; if(dayNum===28) label="🎫SLR";
+        let label = "💎1万";
+        if(dayNum===3) label="🎫SSR"; if(dayNum===6) label="🎫UR"; if(dayNum===7) label="🎫LE\n💎2万";
+        if(dayNum===14) label="🎫LR"; if(dayNum===21) label="🎫LE\n💎2万"; if(dayNum===28) label="🎫SLR";
 
         const div = document.createElement('div');
         div.className = `stamp-cell ${(i+1) === 7 ? 'day7' : ''} ${isClaimed ? 'claimed' : ''}`;
@@ -755,7 +750,7 @@ function updateUI() {
 }
 
 // ==========================================================================
-// 🎰 ガチャ実行
+// 🎰 ガチャ実行 (単発 / 10連 / 100連)
 // ==========================================================================
 function renderGachaScreen() {
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
@@ -774,7 +769,13 @@ function renderGachaScreen() {
         return;
     }
     if (statusText) statusText.innerText = "最高レアを引き当てろ！";
-    if (actionControls) actionControls.innerHTML = `<button id="btn-pull-1" class="btn btn-gacha" onclick="pullGacha(1)" ${isPulling ? 'disabled' : ''}>単発 (💎30)</button><button id="btn-pull-10" class="btn btn-gacha-10" onclick="pullGacha(10)" ${isPulling ? 'disabled' : ''}>10連 (💎300)</button>`;
+    if (actionControls) {
+        actionControls.innerHTML = `
+            <button id="btn-pull-1" class="btn btn-gacha" onclick="pullGacha(1)" ${isPulling ? 'disabled' : ''}>単発 (💎30)</button>
+            <button id="btn-pull-10" class="btn btn-gacha-10" onclick="pullGacha(10)" ${isPulling ? 'disabled' : ''}>10連 (💎300)</button>
+            <button id="btn-pull-100" class="btn btn-gacha-10" style="background: linear-gradient(135deg, #ff0055, #ff5000); color: white; border: none; font-weight: bold;" onclick="pullGacha(100)" ${isPulling ? 'disabled' : ''}>💥 100連 (💎3000)</button>
+        `;
+    }
 
     if (ticketControls) {
         if (state.tickets.ssr > 0) ticketControls.innerHTML += `<button onclick="pullGacha(1, 'ssr')" class="btn btn-ticket-trigger" ${isPulling ? 'disabled' : ''}>🎫 SSR以上確定 (${state.tickets.ssr}枚)</button>`;
@@ -839,6 +840,7 @@ function pullGacha(times, ticketType = false) {
     const resultsContainer = document.getElementById('gacha-result-container');
     if (resultsContainer) {
         resultsContainer.innerHTML = '';
+        const intervalTime = times >= 100 ? 30 : 150; // 100連の時はアニメーションを高速化
         results.forEach((card, index) => {
             setTimeout(() => {
                 const cardEl = document.createElement('div');
@@ -846,9 +848,9 @@ function pullGacha(times, ticketType = false) {
                 cardEl.innerHTML = `<img src="${escapeHTML(card.img)}" alt="${escapeHTML(card.name)}" onerror="this.src='${FALLBACK_IMG}'"><div class="card-rarity-tag">${card.rarity}</div>`;
                 cardEl.onclick = () => openCardDetailModal(currentGacha.id, card.id);
                 resultsContainer.appendChild(cardEl);
-                vibrate();
+                if (index % 5 === 0) vibrate();
                 if (['SLR', 'LR', 'LE'].includes(card.rarity)) {
-                    fireConfetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
+                    fireConfetti({ particleCount: 40, spread: 60, origin: { y: 0.7 } });
                 }
                 if (index === results.length - 1) {
                     isPulling = false;
@@ -856,7 +858,7 @@ function pullGacha(times, ticketType = false) {
                     const shareBtn = document.getElementById('btn-share-pull-result');
                     if (shareBtn) shareBtn.classList.remove('hidden');
                 }
-            }, index * 150);
+            }, index * intervalTime);
         });
     }
 
@@ -1128,7 +1130,6 @@ function renderAdminView() {
     });
 }
 
-// 📖 図鑑描画（ソート順問わず未獲得カードの名前は「？？？」で完全隠蔽）
 function renderCollection() {
     const grid = document.getElementById('collection-grid');
     if (!grid) return;
@@ -1217,7 +1218,6 @@ function renderCollection() {
     }
 }
 
-// ✏️ 図鑑の詳細モーダル表示（所持カードのみ名前変更ボタンを表示）
 function openCardDetailModal(gachaId, cardId) {
     const gacha = getGachaById(gachaId);
     if (!gacha) return;
@@ -1237,7 +1237,6 @@ function openCardDetailModal(gachaId, cardId) {
     if (document.getElementById('modal-card-count')) document.getElementById('modal-card-count').innerText = count;
     if (document.getElementById('modal-card-desc')) document.getElementById('modal-card-desc').innerText = card.desc;
 
-    // 🏠 相棒設定ボタン
     const btnPartner = document.getElementById('btn-set-partner');
     if (btnPartner) {
         btnPartner.onclick = () => {
@@ -1248,7 +1247,6 @@ function openCardDetailModal(gachaId, cardId) {
         };
     }
 
-    // ✏️ 名前変更ボタンを生成して「閉じる」ボタンの上に設置
     const modalActions = document.querySelector('#modal-card-detail .modal-actions');
     let btnRename = document.getElementById('btn-rename-card-local');
     
@@ -1273,7 +1271,6 @@ function openCardDetailModal(gachaId, cardId) {
     openAppModal('modal-card-detail');
 }
 
-// 端末ローカルのみでカード名を書き換える処理（クラウド/シェア元には影響なし）
 async function renameCardLocally(gachaId, cardId) {
     vibrate();
     const gacha = getGachaById(gachaId);
@@ -1344,6 +1341,6 @@ function sharePullResult() {
     navigator.clipboard.writeText(lastPullShareText).then(() => {
         alert("📋 結果をコピーしました！");
     }).catch(() => {
-        prompt("以下のテキストをコピーしてください:", lastLastPullShareText);
+        prompt("以下のテキストをコピーしてください:", lastPullShareText);
     });
 }
