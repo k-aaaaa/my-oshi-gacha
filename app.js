@@ -115,6 +115,7 @@ function closeAppModal(id) {
     document.body.classList.remove('modal-open'); 
 }
 
+// 🔒 共有受け取りユーザー（ゲスト）の場合、「作る」タブを画面から消去する関数
 function applyGuestModeUI() {
     const currentGacha = state ? state.gachas.find(g => g.id === state.currentGachaId) : null;
     const adminNavBtn = document.querySelector('.nav-btn[data-target="view-admin"]');
@@ -148,6 +149,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         if (!state.customColors) state.customColors = defaultState.customColors;
         if (state.splashTime === undefined) state.splashTime = 1200;
         if (state.autoSync === undefined) state.autoSync = false;
+        if (state.isGuestMode === undefined) state.isGuestMode = false;
         
     } catch(e) {
         state = JSON.parse(JSON.stringify(defaultState));
@@ -607,7 +609,7 @@ async function checkSurpriseShare() {
                         importedGacha.id = newId;
                         importedGacha.isLocked = true;
                         
-                        state.isGuestMode = true;
+                        state.isGuestMode = true; // ゲストモードフラグを永続化保存
                         
                         state.gachas.push(importedGacha); 
                         state.currentGachaId = newId; 
@@ -735,6 +737,7 @@ function updateUI() {
             const pCard = pGacha.cards.find(c => c.id === state.partner.cardId);
             if (pCard) {
                 partnerImg.src = pCard.img; 
+                partnerImg.style.objectFit = 'contain';
                 partnerImg.onerror = () => { partnerImg.src = FALLBACK_IMG; };
                 partnerImg.classList.remove('hidden');
                 if (partnerStar) {
@@ -745,6 +748,7 @@ function updateUI() {
         }
     } else if (partnerImg) {
         partnerImg.src = FALLBACK_IMG;
+        partnerImg.style.objectFit = 'contain';
         if (partnerStar) partnerStar.classList.add('hidden');
     }
 }
@@ -840,12 +844,12 @@ function pullGacha(times, ticketType = false) {
     const resultsContainer = document.getElementById('gacha-result-container');
     if (resultsContainer) {
         resultsContainer.innerHTML = '';
-        const intervalTime = times >= 100 ? 30 : 150; // 100連の時はアニメーションを高速化
+        const intervalTime = times >= 100 ? 20 : 150;
         results.forEach((card, index) => {
             setTimeout(() => {
                 const cardEl = document.createElement('div');
                 cardEl.className = `card ${card.rarity}`;
-                cardEl.innerHTML = `<img src="${escapeHTML(card.img)}" alt="${escapeHTML(card.name)}" onerror="this.src='${FALLBACK_IMG}'"><div class="card-rarity-tag">${card.rarity}</div>`;
+                cardEl.innerHTML = `<img src="${escapeHTML(card.img)}" alt="${escapeHTML(card.name)}" style="object-fit:contain;" onerror="this.src='${FALLBACK_IMG}'"><div class="card-rarity-tag">${card.rarity}</div>`;
                 cardEl.onclick = () => openCardDetailModal(currentGacha.id, card.id);
                 resultsContainer.appendChild(cardEl);
                 if (index % 5 === 0) vibrate();
@@ -1115,7 +1119,7 @@ function renderAdminView() {
         div.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:8px; border-bottom:1px solid rgba(0,0,0,0.08);";
         div.innerHTML = `
             <div style="display:flex; align-items:center; gap:8px;">
-                <img src="${escapeHTML(card.img)}" style="width:40px; height:40px; object-fit:cover; border-radius:6px;" onerror="this.src='${FALLBACK_IMG}'">
+                <img src="${escapeHTML(card.img)}" style="width:40px; height:40px; object-fit:contain; border-radius:6px;" onerror="this.src='${FALLBACK_IMG}'">
                 <div>
                     <span style="font-size:10px; font-weight:bold; background:rgba(0,0,0,0.05); padding:2px 4px; border-radius:3px;">${card.rarity}</span>
                     <strong style="font-size:12px; margin-left:4px;">${escapeHTML(card.name)}</strong>
@@ -1183,7 +1187,7 @@ function renderCollection() {
                 const div = document.createElement('div');
                 if (count > 0) {
                     div.className = `card ${card.rarity}`;
-                    div.innerHTML = `<img src="${escapeHTML(card.img)}" alt="${escapeHTML(card.name)}" onerror="this.src='${FALLBACK_IMG}'"><div class="card-rarity-tag">${card.rarity}</div>`;
+                    div.innerHTML = `<img src="${escapeHTML(card.img)}" alt="${escapeHTML(card.name)}" style="object-fit:contain;" onerror="this.src='${FALLBACK_IMG}'"><div class="card-rarity-tag">${card.rarity}</div>`;
                     div.onclick = () => openCardDetailModal(currentGacha.id, card.id);
                 } else {
                     div.className = 'item-empty';
@@ -1203,7 +1207,7 @@ function renderCollection() {
             const div = document.createElement('div');
             if (count > 0) {
                 div.className = `card ${card.rarity}`;
-                div.innerHTML = `<img src="${escapeHTML(card.img)}" alt="${escapeHTML(card.name)}" onerror="this.src='${FALLBACK_IMG}'"><div class="card-rarity-tag">${card.rarity}</div>`;
+                div.innerHTML = `<img src="${escapeHTML(card.img)}" alt="${escapeHTML(card.name)}" style="object-fit:contain;" onerror="this.src='${FALLBACK_IMG}'"><div class="card-rarity-tag">${card.rarity}</div>`;
                 div.onclick = () => openCardDetailModal(currentGacha.id, card.id);
             } else {
                 div.className = 'item-empty';
@@ -1230,6 +1234,7 @@ function openCardDetailModal(gachaId, cardId) {
     const modalImg = document.getElementById('modal-card-img');
     if (modalImg) {
         modalImg.src = card.img;
+        modalImg.style.objectFit = 'contain';
         modalImg.onerror = () => { modalImg.src = FALLBACK_IMG; };
     }
 
@@ -1294,6 +1299,7 @@ async function renameCardLocally(gachaId, cardId) {
     alert("✨ この端末でのカード名を変更しました！\n（※元のガチャ共有データには影響しません）");
 }
 
+// 🏛️ 天井交換画面（未獲得カード隠蔽 ＆ レアリティ順並び替え）
 function openCeilingModal() {
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
     if (!currentGacha) return;
@@ -1303,15 +1309,33 @@ function openCeilingModal() {
     if (!container) return;
     container.innerHTML = '';
 
-    currentGacha.cards.forEach(card => {
+    const inv = state.inventory[currentGacha.id] || {};
+    const rarityOrder = ['SLR', 'LR', 'LE', 'UR', 'SSR', 'SR', 'R', 'N', 'C'];
+
+    // レアリティ順にソートして並べる
+    const sortedCards = [...currentGacha.cards].sort((a, b) => {
+        let indexA = rarityOrder.indexOf(a.rarity);
+        let indexB = rarityOrder.indexOf(b.rarity);
+        if (indexA === -1) indexA = 99;
+        if (indexB === -1) indexB = 99;
+        return indexA - indexB;
+    });
+
+    sortedCards.forEach(card => {
+        const count = inv[card.id] || 0;
+        const isAcquired = count > 0;
+
+        const displayName = isAcquired ? escapeHTML(card.name) : "？？？";
+        const displayImg = isAcquired ? escapeHTML(card.img) : FALLBACK_IMG;
+
         const div = document.createElement('div');
-        div.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:8px; border:1px solid rgba(0,0,0,0.1); border-radius:8px;";
+        div.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:8px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; margin-bottom:6px;";
         div.innerHTML = `
             <div style="display:flex; align-items:center; gap:8px;">
-                <img src="${escapeHTML(card.img)}" style="width:40px; height:40px; object-fit:cover; border-radius:6px;" onerror="this.src='${FALLBACK_IMG}'">
+                <img src="${displayImg}" style="width:40px; height:40px; object-fit:contain; border-radius:6px;" onerror="this.src='${FALLBACK_IMG}'">
                 <div>
-                    <span style="font-size:10px; font-weight:bold;">[${card.rarity}]</span>
-                    <div style="font-size:12px;">${escapeHTML(card.name)}</div>
+                    <span style="font-size:10px; font-weight:bold; background:rgba(0,0,0,0.05); padding:2px 4px; border-radius:3px;">${card.rarity}</span>
+                    <div style="font-size:12px; font-weight:bold; margin-top:2px;">${displayName}</div>
                 </div>
             </div>
             <button class="btn btn-outline" ${pt < 5000 ? 'disabled' : ''} onclick="exchangeCeilingCard('${card.id}')">交換 (5000pt)</button>
