@@ -424,23 +424,37 @@ function triggerManualSync() {
 }
 
 async function processCardImageUpload(file) {
-    const qualityMap = { 'high': 0.9, 'standard': 0.65, 'eco': 0.4 };
-    const quality = qualityMap[state.imageQuality] || 0.65;
-    
-    const base64Data = await new Promise((resolve, reject) => {
+    // 💡 設定に応じた最大横幅と画質（GAS上限10MB回避のため超軽量化）
+    const qualityMap = { 
+        'high': { width: 600, quality: 0.7 },
+        'standard': { width: 450, quality: 0.55 },
+        'eco': { width: 300, quality: 0.4 }
+    };
+    const settings = qualityMap[state.imageQuality] || qualityMap['standard'];
+
+    // 1. クライアント側（ブラウザCanvas）で画像をリサイズ＆JPEG強力圧縮
+    const compressedBase64 = await new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const img = new Image();
             img.onload = () => {
                 const canvas = document.createElement('canvas');
-                const MAX_WIDTH = state.imageQuality === 'high' ? 800 : (state.imageQuality === 'eco' ? 300 : 500);
                 let scale = 1;
-                if (img.width > MAX_WIDTH) scale = MAX_WIDTH / img.width;
+                // 最大幅を超える場合は縮小
+                if (img.width > settings.width) {
+                    scale = settings.width / img.width;
+                }
                 canvas.width = img.width * scale;
                 canvas.height = img.height * scale;
+
                 const ctx = canvas.getContext('2d');
+                // 背景を白で塗りつぶし（PNG透過時の黒化防止）
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                resolve(canvas.toDataURL('image/jpeg', quality));
+
+                // JPEGに強制変換して高圧縮率を適用
+                resolve(canvas.toDataURL('image/jpeg', settings.quality));
             };
             img.onerror = reject;
             img.src = e.target.result;
@@ -448,6 +462,33 @@ async function processCardImageUpload(file) {
         reader.onerror = reject;
         reader.readAsDataURL(file);
     });
+
+    // 2. GASのURLがない場合はそのままローカル保存用Base64を返す
+    if (!GAS_URL) return compressedBase64;
+
+    // 3. GASへ圧縮済み軽量画像を送信
+    try {
+        const payload = JSON.stringify({
+            action: 'uploadImage',
+            filename: `card_${Date.now()}_${Math.floor(Math.random()*1000)}.jpg`,
+            file: compressedBase64
+        });
+
+        const res = await fetch(GAS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain' },
+            body: payload
+        });
+
+        const result = await res.json();
+        if (result.status === 'success' && result.url) {
+            return result.url; // Google Driveの直リンクURL
+        }
+    } catch (e) {
+        console.warn("GASアップロード通信失敗。ローカルBase64データとして保存します:", e);
+    }
+    return compressedBase64;
+}
 
     if (!GAS_URL) return base64Data;
 
