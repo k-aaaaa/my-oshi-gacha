@@ -1128,7 +1128,7 @@ function renderAdminView() {
     });
 }
 
-// 📖 図鑑描画（未獲得カードの名前は「？？？」で完全隠蔽）
+// 📖 図鑑描画（ソート順問わず未獲得カードの名前は「？？？」で完全隠蔽）
 function renderCollection() {
     const grid = document.getElementById('collection-grid');
     if (!grid) return;
@@ -1217,7 +1217,7 @@ function renderCollection() {
     }
 }
 
-// ✏️ 図鑑の詳細モーダル表示（所持しているカードのみ名前変更ボタンを表示）
+// ✏️ 図鑑の詳細モーダル表示（所持カードのみ名前変更ボタンを表示）
 function openCardDetailModal(gachaId, cardId) {
     const gacha = getGachaById(gachaId);
     if (!gacha) return;
@@ -1344,6 +1344,6 @@ function sharePullResult() {
     navigator.clipboard.writeText(lastPullShareText).then(() => {
         alert("📋 結果をコピーしました！");
     }).catch(() => {
-        prompt("以下のテキストをコピーしてください:", lastPullShareText);
+        prompt("以下のテキストをコピーしてください:", lastLastPullShareText);
     });
 }
