@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gacha-maker-v4';
+const CACHE_NAME = 'gacha-maker-v5';
 const urlsToCache = [
   './',
   './index.html',
