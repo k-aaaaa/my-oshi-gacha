@@ -181,6 +181,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (state.autoSync === undefined) state.autoSync = true;
     if (state.isGuestMode === undefined) state.isGuestMode = false;
 
+    // ガチャ選択状態の安全補正
+    if (state.gachas && state.gachas.length > 0) {
+        const exists = state.gachas.some(g => g.id === state.currentGachaId);
+        if (!exists) state.currentGachaId = state.gachas[0].id;
+    }
+
     applyCurrentThemeAndColors();
     applyCustomAppIcon();
     if (document.getElementById('gas-url')) {
@@ -369,37 +375,50 @@ async function checkSurpriseShare() {
 }
 
 // ------------------------------------------
-// 🎰 100連対応 ガチャ画面レンダラー & 実行エンジン
+// 🎰 100連ボタン強制生成＆ガチャ描画エンジン
 // ------------------------------------------
 function renderGachaScreen() {
-    const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
+    if (!state || !state.gachas || state.gachas.length === 0) return;
+
+    let currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
+    if (!currentGacha) {
+        currentGacha = state.gachas[0];
+        state.currentGachaId = currentGacha.id;
+    }
+
     const statusText = document.getElementById('gacha-screen-status');
     const actionControls = document.getElementById('gacha-action-controls');
     
     if (document.getElementById('current-mileage')) {
-        document.getElementById('current-mileage').innerText = currentGacha ? (state.mileage[currentGacha.id] || 0) : 0;
-    }
-
-    if (!currentGacha) {
-        if (statusText) statusText.innerText = "ガチャがありません";
-        if (actionControls) actionControls.innerHTML = `<p style="text-align:center;width:100%;font-size:12px;opacity:0.6;">⚙️ガチャを選択してください</p>`;
-        return;
+        document.getElementById('current-mileage').innerText = state.mileage[currentGacha.id] || 0;
     }
 
     if (statusText) statusText.innerText = "最高レアを引き当てろ！";
 
+    // アクション領域がある場合は必ずボタン3種（単発・10連・100連）を描画
     if (actionControls) {
         actionControls.innerHTML = `
             <button id="btn-pull-1" class="btn btn-gacha" onclick="pullGacha(1)" ${isPulling ? 'disabled' : ''}>単発 (💎30)</button>
             <button id="btn-pull-10" class="btn btn-gacha-10" onclick="pullGacha(10)" ${isPulling ? 'disabled' : ''}>10連 (💎300)</button>
             <button id="btn-pull-100" class="btn btn-gacha-10" style="background: linear-gradient(135deg, #ff9500, #ff5e00); color: white; font-weight: bold;" onclick="pullGacha(100)" ${isPulling ? 'disabled' : ''}>🔥 100連 (💎3,000)</button>
         `;
+    } else {
+        // HTML上に直接ボタンが存在する場合のフォールバック
+        const b1 = document.getElementById('btn-pull-1');
+        const b10 = document.getElementById('btn-pull-10');
+        const b100 = document.getElementById('btn-pull-100');
+        if (b1) b1.onclick = () => pullGacha(1);
+        if (b10) b10.onclick = () => pullGacha(10);
+        if (b100) b100.onclick = () => pullGacha(100);
     }
 }
 
 function pullGacha(count) {
     if (isPulling) return;
-    const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
+    
+    let currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
+    if (!currentGacha && state.gachas.length > 0) currentGacha = state.gachas[0];
+
     if (!currentGacha || !currentGacha.cards || currentGacha.cards.length === 0) {
         return alert("⚠️ このガチャにはカードが登録されていません！");
     }
