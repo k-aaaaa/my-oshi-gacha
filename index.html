@@ -209,14 +209,19 @@
             </div>
 
             <div class="panel">
-                <h2 class="panel-title">🖼️ 保存画質モード</h2>
-                <p style="font-size:10px; opacity:0.7; margin-bottom:10px;">大容量倉庫（IndexedDB）を搭載したため、超高画質でも数千枚入るようになりました！</p>
-                <select id="image-quality-selector" class="form-input" onchange="changeImageQuality(this.value)">
-                    <option value="high">超高画質 (推奨)</option>
-                    <option value="standard" selected>標準</option>
-                    <option value="eco">エコ (超軽量化)</option>
-                </select>
-            </div>
+    <h2 class="panel-title">🖼️ 保存画質モード</h2>
+    <p style="font-size:10px; opacity:0.7; margin-bottom:10px;">大容量倉庫（IndexedDB）を搭載したため、超高画質でも数千枚入るようになりました！</p>
+    <select id="image-quality-selector" class="form-input" onchange="changeImageQuality(this.value)">
+        <option value="high">超高画質 (推奨)</option>
+        <option value="standard" selected>標準</option>
+        <option value="eco">エコ (超軽量化)</option>
+    </select>
+    
+    <!-- 🔽 ここに以下のボタンを追加 🔽 -->
+    <button onclick="optimizeAllExistingImages()" class="btn btn-outline w-full" style="margin-top:12px; font-size:11px;">
+        🧹 すでに登録済みのカード画像をまとめて軽量化する
+    </button>
+</div>
 
             <div class="panel" style="border: 2px solid var(--accent-color);">
                 <h2 class="panel-title">💾 究極のデータバックアップ</h2>
