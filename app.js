@@ -75,7 +75,7 @@ const defaultState = {
     archivedGachas: [], 
     currentGachaId: 'default',
     inventory: {},    
-    stones: 30000,      
+    stones: 3000,      
     totalSpent: 0,
     loginDays: 0,
     lastLoginDate: "",
@@ -114,7 +114,6 @@ function closeAppModal(id) {
 }
 
 window.addEventListener('DOMContentLoaded', async () => {
-    // 📲 Service Worker 登録処理の追加
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').catch(err => console.error("SW登録失敗:", err));
     }
@@ -176,6 +175,12 @@ window.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('image-quality-selector').value = state.imageQuality;
     }
 
+    // 画像の複数選択を有効化
+    const cardImgInput = document.getElementById('input-card-img');
+    if (cardImgInput) {
+        cardImgInput.setAttribute('multiple', 'true');
+    }
+
     checkLoginBonus();
     updateUI();
     renderGachaSelectors();
@@ -183,7 +188,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     triggerPartnerSpeech(true); 
 
     setupAdminCardListener();
-    setupAdminGachaListeners(); // 🔧 ガチャ新規作成・削除ボタンのイベントリスナー追加
+    setupAdminGachaListeners();
 });
 
 window.addEventListener('popstate', (e) => {
@@ -449,7 +454,6 @@ function triggerManualSync() {
     .catch(() => alert("⚠️ 通信に失敗しました。GASのURLや設定を確認してください。"));
 }
 
-// 🖼️ GASへ画像をアップロード（失敗または未設定時はローカル Base64 圧縮にフォールバック）
 async function processCardImageUpload(file) {
     const qualityMap = { 'high': 0.9, 'standard': 0.65, 'eco': 0.4 };
     const quality = qualityMap[state.imageQuality] || 0.65;
@@ -567,7 +571,7 @@ async function checkSurpriseShare() {
                     importedGacha.id = 'imported_' + Date.now(); 
                     state.gachas.push(importedGacha); 
                     state.currentGachaId = importedGacha.id; 
-                    state.stones += 30000; 
+                    state.stones += 3000; 
                     saveLocal(); renderGachaSelectors(); renderAdminView();
                     closeAppModal('modal-surprise');
                     window.history.replaceState({}, document.title, window.location.pathname);
@@ -599,12 +603,12 @@ function checkLoginBonus() {
     let totalStones = 0; let earnedTickets = { ssr: 0, ur: 0, le: 0, lr: 0, slr: 0 };
     for(let i=0; i<daysToCatchUp; i++){
         state.loginDays += 1; const cycleDay = ((state.loginDays - 1) % 28) + 1;
-        totalStones += 30000; 
+        totalStones += 3000; 
         if (cycleDay === 3) earnedTickets.ssr += 1;
         if (cycleDay === 6) earnedTickets.ur += 1;
-        if (cycleDay === 7) { earnedTickets.le += 1; totalStones += 100000; }
+        if (cycleDay === 7) { earnedTickets.le += 1; totalStones += 10000; }
         if (cycleDay === 14) earnedTickets.lr += 1;
-        if (cycleDay === 21) { earnedTickets.le += 1; totalStones += 100000; }
+        if (cycleDay === 21) { earnedTickets.le += 1; totalStones += 10000; }
         if (cycleDay === 28) earnedTickets.slr += 1;
     }
     state.stones += totalStones; state.tickets.ssr += earnedTickets.ssr; state.tickets.ur += earnedTickets.ur; state.tickets.le += earnedTickets.le; state.tickets.lr += earnedTickets.lr; state.tickets.slr += earnedTickets.slr;
@@ -672,7 +676,6 @@ function updateUI() {
         
         if (currentGacha.cards.length > 0) {
             const inv = state.inventory[currentGacha.id] || {};
-            // 🔧 分子（所持種類数）の判定精度を向上
             const typesGot = currentGacha.cards.filter(c => (inv[c.id] || 0) > 0).length;
             const total = currentGacha.cards.length;
             document.getElementById('comp-percent').innerText = Math.floor((typesGot / total) * 100);
@@ -868,45 +871,57 @@ function setupAdminCardListener() {
         if (currentGacha.isLocked) return alert("🔒 このガチャはロックされているため編集できません");
 
         const editId = document.getElementById('edit-card-id').value;
-        const name = document.getElementById('input-card-name').value.trim();
+        const baseName = document.getElementById('input-card-name').value.trim();
         const rarity = document.getElementById('input-card-rarity').value;
         const desc = document.getElementById('input-card-desc').value.trim();
-        const imgFile = document.getElementById('input-card-img').files[0];
+        const imgFiles = document.getElementById('input-card-img').files;
 
-        if (!name) return alert("カード名を入力してください");
-
-        let imgUrl = "";
-        if (editId) {
-            const existingCard = currentGacha.cards.find(c => c.id === editId);
-            if (existingCard) imgUrl = existingCard.img;
-        }
-
-        if (imgFile) {
-            btnAdd.innerText = "⏳ 画像処理中...";
-            btnAdd.disabled = true;
-            isPulling = true;
-
-            imgUrl = await processCardImageUpload(imgFile);
-
-            btnAdd.innerText = "ガチャに実装する！";
-            btnAdd.disabled = false;
-            isPulling = false;
-        }
-
-        if (!imgUrl) return alert("カード画像を選択してください");
-
+        // 編集モード（単一カードの更新）
         if (editId) {
             const card = currentGacha.cards.find(c => c.id === editId);
-            if (card) {
-                card.name = name;
-                card.rarity = rarity;
-                card.desc = desc || "説明なし";
-                card.img = imgUrl;
+            if (!card) return;
+
+            let imgUrl = card.img;
+            if (imgFiles && imgFiles.length > 0) {
+                btnAdd.innerText = "⏳ 画像処理中...";
+                btnAdd.disabled = true;
+                isPulling = true;
+                imgUrl = await processCardImageUpload(imgFiles[0]);
+                btnAdd.innerText = "ガチャに実装する！";
+                btnAdd.disabled = false;
+                isPulling = false;
             }
-        } else {
+
+            card.name = baseName || card.name;
+            card.rarity = rarity; // レアリティの更新
+            card.desc = desc || "説明なし";
+            card.img = imgUrl;
+
+            await saveLocal();
+            cancelEditCard();
+            renderAdminView();
+            alert("✨ カードの情報を更新しました！");
+            return;
+        }
+
+        // 新規一括作成モード
+        if (!imgFiles || imgFiles.length === 0) return alert("カード画像を選択してください");
+
+        btnAdd.innerText = `⏳ 画像処理中 (0/${imgFiles.length})...`;
+        btnAdd.disabled = true;
+        isPulling = true;
+
+        for (let i = 0; i < imgFiles.length; i++) {
+            btnAdd.innerText = `⏳ 画像処理中 (${i + 1}/${imgFiles.length})...`;
+            const file = imgFiles[i];
+            const imgUrl = await processCardImageUpload(file);
+            
+            // カード名の自動付与 (入力があれば連番、無ければファイル名から生成)
+            let cardName = baseName ? (imgFiles.length > 1 ? `${baseName}_${i + 1}` : baseName) : file.name.replace(/\.[^/.]+$/, "");
+
             const newCard = {
-                id: 'card_' + Date.now(),
-                name: name,
+                id: 'card_' + Date.now() + '_' + i,
+                name: cardName,
                 rarity: rarity,
                 desc: desc || "説明なし",
                 img: imgUrl
@@ -914,10 +929,14 @@ function setupAdminCardListener() {
             currentGacha.cards.push(newCard);
         }
 
+        btnAdd.innerText = "ガチャに実装する！";
+        btnAdd.disabled = false;
+        isPulling = false;
+
         await saveLocal();
         cancelEditCard();
         renderAdminView();
-        alert("✨ カードを保存しました！");
+        alert(`✨ ${imgFiles.length}枚のカードを一括追加しました！`);
     });
 }
 
@@ -1088,7 +1107,9 @@ function openCeilingModal() {
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
     if (!currentGacha) return;
     const pt = state.mileage[currentGacha.id] || 0;
+    
     const container = document.getElementById('ceiling-cards-list');
+    if (!container) return;
     container.innerHTML = '';
 
     currentGacha.cards.forEach(card => {
