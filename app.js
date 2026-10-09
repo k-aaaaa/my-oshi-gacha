@@ -1278,6 +1278,7 @@ async function renameCardLocally(gachaId, cardId) {
     alert("✨ この端末でのカード名を変更しました！\n（※元のガチャ共有データには影響しません）");
 }
 
+// 🏛️ 天井交換画面（未獲得カード隠蔽 ＆ レアリティ順並び替え ＆ 画像比率維持レイアウト）
 function openCeilingModal() {
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
     if (!currentGacha) return;
@@ -1306,16 +1307,20 @@ function openCeilingModal() {
         const displayImg = isAcquired ? escapeHTML(card.img) : FALLBACK_IMG;
 
         const div = document.createElement('div');
-        div.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:8px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; margin-bottom:6px;";
+        // 📐 行全体の高さを固定し、左右の要素を綺麗に整列
+        div.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; margin-bottom:8px; height:60px; box-sizing:border-box; background:var(--panel-bg, #fff);";
+        
         div.innerHTML = `
-            <div style="display:flex; align-items:center; gap:8px;">
-                <img src="${displayImg}" style="width:40px; height:40px; object-fit:contain; border-radius:6px;" onerror="this.src='${FALLBACK_IMG}'">
-                <div>
-                    <span style="font-size:10px; font-weight:bold; background:rgba(0,0,0,0.05); padding:2px 4px; border-radius:3px;">${card.rarity}</span>
-                    <div style="font-size:12px; font-weight:bold; margin-top:2px;">${displayName}</div>
+            <div style="display:flex; align-items:center; gap:10px; min-width:0; flex:1;">
+                <div style="width:44px; height:44px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.03); border-radius:6px; overflow:hidden;">
+                    <img src="${displayImg}" style="max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain;" onerror="this.src='${FALLBACK_IMG}'">
+                </div>
+                <div style="min-width:0; flex:1;">
+                    <span style="font-size:10px; font-weight:bold; background:rgba(0,0,0,0.06); padding:2px 6px; border-radius:4px; display:inline-block; margin-bottom:2px;">${card.rarity}</span>
+                    <div style="font-size:12px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${displayName}</div>
                 </div>
             </div>
-            <button class="btn btn-outline" ${pt < 5000 ? 'disabled' : ''} onclick="exchangeCeilingCard('${card.id}')">交換 (5000pt)</button>
+            <button class="btn btn-outline" style="flex-shrink:0; margin-left:8px; font-size:11px; padding:6px 12px;" ${pt < 5000 ? 'disabled' : ''} onclick="exchangeCeilingCard('${card.id}')">交換 (5000pt)</button>
         `;
         container.appendChild(div);
     });
