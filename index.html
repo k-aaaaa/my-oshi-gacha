@@ -296,3 +296,20 @@
     <script src="app.js"></script>
 </body>
 </html>
+
+
+<!-- 🔗 共有URLモーダル -->
+<div id="modal-share-url" class="modal-overlay hidden">
+    <div class="modal-content" style="text-align: center;">
+        <h2>🔗 ガチャ共有URLが完成！</h2>
+        <p style="font-size: 11px; opacity: 0.8; margin-bottom: 12px;">以下のURLをコピーして友達や他端末に送ると、このガチャを読み込めます。</p>
+        
+        <!-- 一括選択・コピーしやすいテキストエリア -->
+        <textarea id="share-url-textarea" readonly style="width:100%; height:80px; font-size:11px; padding:8px; border-radius:8px; border:1px solid rgba(0,0,0,0.2); background:#f9f9f9; resize:none; word-break:break-all;"></textarea>
+        
+        <div style="margin-top:15px; display:flex; flex-direction:column; gap:8px;">
+            <button id="btn-copy-share-url" class="btn btn-gacha" style="width:100%;">📋 URLを全コピーする</button>
+            <button onclick="closeAppModal('modal-share-url')" class="btn btn-outline" style="width:100%;">閉じる</button>
+        </div>
+    </div>
+</div>
