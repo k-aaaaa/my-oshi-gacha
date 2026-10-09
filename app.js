@@ -1137,20 +1137,31 @@ function renderGachaSelectors() {
 
 function renderAdminView() {
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
-    const lockedWarning = document.getElementById('admin-locked-warning');
-    const editorSection = document.getElementById('admin-editor-section');
     const cardList = document.getElementById('admin-card-list');
+    const editorSection = document.getElementById('admin-editor-section'); // 編集パネル全体の親ID
+    const lockedWarning = document.getElementById('admin-locked-warning');
 
     if (!currentGacha) return;
 
+    // 🔒 ロック（編集不可）状態の場合の処理
     if (currentGacha.isLocked) {
-        if (lockedWarning) lockedWarning.classList.remove('hidden');
-        if (editorSection) editorSection.classList.add('hidden');
+        if (editorSection) editorSection.classList.add('hidden'); // カード作成フォームを隠す
+        if (lockedWarning) {
+            lockedWarning.classList.remove('hidden');
+            lockedWarning.innerHTML = `
+                <div style="background: rgba(255, 149, 0, 0.1); border: 1px solid #ff9500; border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 15px;">
+                    <div style="font-size: 20px; margin-bottom: 5px;">🔒 編集権限がありません</div>
+                    <p style="font-size: 11px; opacity: 0.8; margin: 0;">このガチャは他のユーザーから配布された閲覧専用データです。<br>カードの追加・変更・削除はできません。</p>
+                </div>
+            `;
+        }
+        if (cardList) cardList.innerHTML = `<p style="text-align:center; opacity:0.5; padding:20px; font-size:12px;">🔒 編集不可（閲覧専用）</p>`;
         return;
-    } else {
-        if (lockedWarning) lockedWarning.classList.add('hidden');
-        if (editorSection) editorSection.classList.remove('hidden');
     }
+
+    // 🔓 通常の作成可能なガチャの場合
+    if (editorSection) editorSection.classList.remove('hidden');
+    if (lockedWarning) lockedWarning.classList.add('hidden');
 
     if (!cardList) return;
     cardList.innerHTML = '';
