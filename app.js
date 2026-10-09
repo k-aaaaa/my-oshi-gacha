@@ -2,7 +2,7 @@
 // PWA Gacha Maker - Full Logic Code
 // ==========================================
 
-const GAS_URL = "YOUR_GAS_WEB_APP_URL_HERE"; // ご自身のGASウェブアプリURLを設定してください
+const GAS_URL = "https://script.google.com/macros/s/AKfycby387y_CisxVLM2mIEqr7LLrI9pIn_jZVNf3KMaU_6E0kQ-6sYNUxO0A_K1OxGNbqug/exec"; // ご自身のGASウェブアプリURLを設定してください
 const FALLBACK_IMG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23eee'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='14' fill='%23aaa'>No Image</text></svg>";
 
 // アプリ共通ステート
