@@ -541,19 +541,40 @@ if(document.getElementById('btn-share-gacha-gas')) {
     });
 }
 
-// 🎁 共有ガチャ受信＆受け取り処理（受取確定＆演出連動）
+// 🎁 共有ガチャ受信＆受取処理（重複受け取り防止＆自動スキップ対応）
 async function checkSurpriseShare() {
     const urlParams = new URLSearchParams(window.location.search);
     const surpriseId = urlParams.get('surprise');
     const apiParam = urlParams.get('api');
     const activeGasUrl = apiParam ? decodeURIComponent(apiParam) : GAS_URL;
 
-    if (surpriseId && activeGasUrl) {
+    if (!surpriseId) return;
+
+    // 💡 すでに同じ共有IDのガチャを受け取り済みかチェック
+    const alreadyImported = state.gachas.find(g => g.shareId === surpriseId || g.id === 'imported_' + surpriseId);
+    
+    if (alreadyImported) {
+        // 既に持っている場合はモーダルを出さずに、そのガチャを直接開く
+        state.currentGachaId = alreadyImported.id;
+        state.isGuestMode = true;
+        await saveLocal();
+        
+        // URLのパラメータを綺麗に削除して自然な状態にする
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        applyGuestModeUI();
+        renderGachaSelectors();
+        switchTab('view-gacha', false);
+        renderGachaScreen();
+        return;
+    }
+
+    // 未受け取りの場合のみGASからデータ取得
+    if (activeGasUrl) {
         try {
             const res = await fetch(activeGasUrl + "?action=getShare&shareId=" + surpriseId);
             const result = await res.json();
             
-            // データ構造（result.data または result 直接）を判定
             const importedGacha = result.data || (result.cards ? result : null);
 
             if (result.status === "success" && importedGacha) {
@@ -564,13 +585,13 @@ async function checkSurpriseShare() {
                     openBtn.onclick = async () => {
                         vibrate();
                         
-                        const newId = 'imported_' + Date.now();
+                        const newId = 'imported_' + surpriseId;
                         importedGacha.id = newId;
+                        importedGacha.shareId = surpriseId; // 共有IDを識別子として保持
                         importedGacha.isLocked = true;
                         
                         state.isGuestMode = true; 
                         
-                        // 重複追加を防ぎつつガチャをセット
                         const existingIdx = state.gachas.findIndex(g => g.id === newId);
                         if (existingIdx >= 0) {
                             state.gachas[existingIdx] = importedGacha;
@@ -584,6 +605,8 @@ async function checkSurpriseShare() {
                         await saveLocal(); 
                         
                         closeAppModal('modal-surprise');
+                        
+                        // URLのパラメータをきれいに削除
                         window.history.replaceState({}, document.title, window.location.pathname);
                         
                         applyGuestModeUI();
@@ -591,7 +614,7 @@ async function checkSurpriseShare() {
                         switchTab('view-gacha', false);
                         renderGachaScreen();
                         
-                        // 🎉 画面切り替え完了後にクラッカー（紙吹雪）を打ち上げ
+                        // 🎉 初回受け取り時のみクラッカー演出
                         setTimeout(() => {
                             fireConfetti({
                                 particleCount: 120,
