@@ -75,7 +75,7 @@ const defaultState = {
     archivedGachas: [], 
     currentGachaId: 'default',
     inventory: {},    
-    stones: 300,      
+    stones: 30000,      
     totalSpent: 0,
     loginDays: 0,
     lastLoginDate: "",
@@ -567,7 +567,7 @@ async function checkSurpriseShare() {
                     importedGacha.id = 'imported_' + Date.now(); 
                     state.gachas.push(importedGacha); 
                     state.currentGachaId = importedGacha.id; 
-                    state.stones += 3000; 
+                    state.stones += 30000; 
                     saveLocal(); renderGachaSelectors(); renderAdminView();
                     closeAppModal('modal-surprise');
                     window.history.replaceState({}, document.title, window.location.pathname);
@@ -599,12 +599,12 @@ function checkLoginBonus() {
     let totalStones = 0; let earnedTickets = { ssr: 0, ur: 0, le: 0, lr: 0, slr: 0 };
     for(let i=0; i<daysToCatchUp; i++){
         state.loginDays += 1; const cycleDay = ((state.loginDays - 1) % 28) + 1;
-        totalStones += 3000; 
+        totalStones += 30000; 
         if (cycleDay === 3) earnedTickets.ssr += 1;
         if (cycleDay === 6) earnedTickets.ur += 1;
-        if (cycleDay === 7) { earnedTickets.le += 1; totalStones += 10000; }
+        if (cycleDay === 7) { earnedTickets.le += 1; totalStones += 100000; }
         if (cycleDay === 14) earnedTickets.lr += 1;
-        if (cycleDay === 21) { earnedTickets.le += 1; totalStones += 10000; }
+        if (cycleDay === 21) { earnedTickets.le += 1; totalStones += 100000; }
         if (cycleDay === 28) earnedTickets.slr += 1;
     }
     state.stones += totalStones; state.tickets.ssr += earnedTickets.ssr; state.tickets.ur += earnedTickets.ur; state.tickets.le += earnedTickets.le; state.tickets.lr += earnedTickets.lr; state.tickets.slr += earnedTickets.slr;
