@@ -505,38 +505,73 @@ async function optimizeAllExistingImages() {
     alert(`✨ ${successCount}枚の画像を軽量化しました！`);
 }
 
+// 🔗 ガチャ共有URL発行（シェアされた側は自動で作成・編集不可の閲覧専用になる）
 if(document.getElementById('btn-share-gacha-gas')) {
-    document.getElementById('btn-share-gacha-gas').addEventListener('click', async () => {
+    document.getElementById('btn-share-gacha-gas').onclick = async () => {
         vibrate();
         if(isPulling) return;
         if(!GAS_URL) return alert("⚠️ 設定画面からGASのURLを登録してください！");
+        
         const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
         if (!currentGacha || currentGacha.cards.length === 0) return alert("カードが1枚もありません！");
         
+        // 💡 共有用データを作成し、編集不可（isLocked = true）を強制設定
         const exportGacha = JSON.parse(JSON.stringify(currentGacha));
-        if(confirm("🔒 このガチャに鍵をかけますか？")) {
-            exportGacha.isLocked = true;
-        } else { exportGacha.isLocked = false; }
+        exportGacha.isLocked = true; // シェアされた人は編集不可
         
-        document.getElementById('btn-share-gacha-gas').innerText = "⏳ 準備中...";
+        const btn = document.getElementById('btn-share-gacha-gas');
+        btn.innerText = "⏳ 共有URL発行中...";
+        btn.disabled = true;
         isPulling = true;
+
         const shareId = "share_" + Date.now();
         const payload = { action: "saveShare", shareId: shareId, gachaData: exportGacha };
         
         try {
-            const res = await fetch(GAS_URL, { method: "POST", body: JSON.stringify(payload), headers: { "Content-Type": "text/plain" } });
+            const res = await fetch(GAS_URL, { 
+                method: "POST", 
+                body: JSON.stringify(payload), 
+                headers: { "Content-Type": "text/plain" } 
+            });
             const result = await res.json();
+
             if(result.status === "success") {
-                const shareUrl = window.location.origin + window.location.pathname + "?surprise=" + shareId + "&api=" + encodeURIComponent(GAS_URL);
-                navigator.clipboard.writeText(shareUrl).then(() => { alert("🔗 サプライズURLをコピーしました！\n\n" + shareUrl); }).catch(() => prompt("以下のURLをコピーして送ってください:", shareUrl));
-            } else alert("エラーが発生しました。");
+                const baseUrl = window.location.href.split('?')[0].split('#')[0];
+                const shareUrl = `${baseUrl}?surprise=${shareId}&api=${encodeURIComponent(GAS_URL)}`;
+                
+                const textarea = document.getElementById('share-url-textarea');
+                const copyBtn = document.getElementById('btn-copy-share-url');
+                
+                if (textarea) textarea.value = shareUrl;
+
+                if (copyBtn) {
+                    copyBtn.onclick = () => {
+                        vibrate();
+                        if (textarea) {
+                            textarea.select();
+                            textarea.setSelectionRange(0, 99999);
+                        }
+                        navigator.clipboard.writeText(shareUrl).then(() => {
+                            alert("📋 閲覧専用の共有URLをコピーしました！");
+                        }).catch(() => {
+                            alert("テキストエリアを選択してコピーしてください。");
+                        });
+                    };
+                }
+
+                openAppModal('modal-share-url');
+            } else {
+                alert("⚠️ GAS側で保存エラーが発生しました: " + (result.message || 'エラー'));
+            }
         } catch(e) { 
-            alert("通信に失敗しました。"); 
+            console.error("共有エラー:", e);
+            alert("⚠️ 通信に失敗しました。"); 
         } finally { 
-            document.getElementById('btn-share-gacha-gas').innerText = "🔗 シェア"; 
+            btn.innerText = "🔗 シェア"; 
+            btn.disabled = false;
             isPulling = false;
         }
-    });
+    };
 }
 
 // 🔗 ガチャ共有URL発行＆一括コピー処理
