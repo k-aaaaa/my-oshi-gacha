@@ -646,7 +646,7 @@ if(document.getElementById('btn-share-gacha-gas')) {
     };
 }
 
-// 🎁 共有URLで開かれた時の自動読み込み＆対象ガチャへの自動遷移
+// 🎁 共有URLで開かれた時の自動読み込み処理
 async function checkSurpriseShare() {
     const urlParams = new URLSearchParams(window.location.search);
     const surpriseId = urlParams.get('surprise');
@@ -668,30 +668,33 @@ async function checkSurpriseShare() {
                     openBtn.onclick = async () => {
                         vibrate();
                         
-                        // IDが重複しないように新規作成してインポート
                         const newId = 'imported_' + Date.now();
                         importedGacha.id = newId;
+                        importedGacha.isLocked = true; // 編集不可
                         
-                        // ガチャを追加して、カレントID（表示対象）をそのガチャに変更
+                        // シェア受け取りフラグ（ゲストモード）を設定
+                        state.isGuestMode = true;
+                        
                         state.gachas.push(importedGacha); 
                         state.currentGachaId = newId; 
-                        state.stones += 3000; // 特典
+                        state.stones += 3000;
                         
-                        // 保存と画面描画の同期
                         await saveLocal(); 
                         renderGachaSelectors(); 
-                        renderAdminView();
                         
                         closeAppModal('modal-surprise');
                         
-                        // URLパラメータをクリア
+                        // URLパラメータを削除
                         window.history.replaceState({}, document.title, window.location.pathname);
                         
-                        // ガチャ画面に自動移動して表示更新
+                        // 💡 「作る」タブを消去・非表示化
+                        applyGuestModeUI();
+                        
+                        // ガチャ画面へ直接ジャンプ
                         switchTab('view-gacha', true);
                         renderGachaScreen();
                         
-                        setTimeout(() => alert(`✨ ガチャ「${importedGacha.title}」を読み込みました！\n💎 石3,000個をプレゼント！`), 300);
+                        setTimeout(() => alert(`✨ ガチャ「${importedGacha.title}」が届きました！\n💎 石3,000個をプレゼント！`), 300);
                     };
                 }
             } else {
@@ -702,7 +705,6 @@ async function checkSurpriseShare() {
         }
     }
 }
-
 function checkLoginBonus() {
     const todayStr = new Date().toLocaleDateString('ja-JP');
     if (state.lastLoginDate === todayStr) return; 
@@ -1368,4 +1370,27 @@ function sharePullResult() {
     }).catch(() => {
         prompt("以下のテキストをコピーしてください:", lastPullShareText);
     });
+}
+
+// 🚫 共有受け取りユーザー（ゲスト）の場合、「作る」タブを画面から消去する
+function applyGuestModeUI() {
+    const currentGacha = state ? state.gachas.find(g => g.id === state.currentGachaId) : null;
+    const adminNavBtn = document.querySelector('.nav-btn[data-target="view-admin"]');
+
+    // シェアされたガチャが現在選ばれている、またはゲストモードの場合
+    if ((state && state.isGuestMode) || (currentGacha && currentGacha.isLocked)) {
+        if (adminNavBtn) {
+            adminNavBtn.style.display = 'none'; // 下部ナビゲーションから「作る」タブを消す
+        }
+        
+        // もし現在「作る」タブが開かれていたら、強制的にホーム画面に戻す
+        const adminView = document.getElementById('view-admin');
+        if (adminView && adminView.classList.contains('active')) {
+            switchTab('view-home', false);
+        }
+    } else {
+        if (adminNavBtn) {
+            adminNavBtn.style.display = 'flex'; // 作成者本人の場合は通常通り表示
+        }
+    }
 }
