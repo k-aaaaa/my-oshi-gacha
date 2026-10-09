@@ -1,18 +1,16 @@
 // ==========================================
-// PWA Gacha Maker - Fully Integrated Logic
+// PWA Gacha Maker - Recovery & Safe Logic
 // ==========================================
 
-// 💡 GASのデプロイURLを設定してください
 let GAS_URL = localStorage.getItem('gacha_gas_url') || "https://script.google.com/macros/s/●●●/exec";
 const FALLBACK_IMG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23eee'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='14' fill='%23aaa'>No Image</text></svg>";
 
-// アプリ共通ステート
 let state = {
     gachas: [],
     currentGachaId: null,
-    inventory: {}, // { gachaId: { cardId: count } }
+    inventory: {},
     stones: 10000,
-    mileage: {},   // { gachaId: points }
+    mileage: {},
     lastLoginDate: null,
     loginDays: 0,
     totalSpentStones: 0,
@@ -20,21 +18,13 @@ let state = {
     partnerCardId: null
 };
 
-// レアリティの確率重み設定
 const RARITY_WEIGHTS = {
-    'SLR': 0.01,
-    'LR': 0.04,
-    'LE': 0.15,
-    'UR': 0.5,
-    'SSR': 3.8,
-    'SR': 10.5,
-    'R': 20.0,
-    'N': 50.0,
-    'C': 15.0
+    'SLR': 0.01, 'LR': 0.04, 'LE': 0.15, 'UR': 0.5,
+    'SSR': 3.8, 'SR': 10.5, 'R': 20.0, 'N': 50.0, 'C': 15.0
 };
 
 // ------------------------------------------
-// 💾 IndexedDB ストレージ管理
+// 💾 IndexedDB (データの読み書き)
 // ------------------------------------------
 const DB_NAME = 'GachaMakerDB';
 const DB_VERSION = 1;
@@ -88,41 +78,35 @@ async function loadLocal() {
 }
 
 // ------------------------------------------
-// 🚀 アプリ初期化
+// 🚀 アプリ起動処理（絶対に止まらない安全設計）
 // ------------------------------------------
 document.addEventListener('DOMContentLoaded', async () => {
-    // スプラッシュ非表示タイマー
+    // 🔥 最優先：1秒後にスプラッシュ画面を必ず強制解除する
     setTimeout(() => {
         const splash = document.getElementById('splash');
-        if (splash) splash.classList.add('hidden');
-    }, 1200);
+        if (splash) splash.style.display = 'none';
+    }, 1000);
 
-    // 1. ローカルデータ復元
-    await loadLocal();
+    try {
+        // 1. ローカルデータを最優先で復元（大切なデータを取り出します）
+        await loadLocal();
 
-    // 2. 初期データ構造のセットアップ
-    if (!state.gachas || state.gachas.length === 0) {
-        initDefaultGacha();
+        // 2. データが空の場合のみデフォルト作成
+        if (!state.gachas || state.gachas.length === 0) {
+            initDefaultGacha();
+        }
+
+        // 3. イベントバインド＆ログボ
+        setupEventListeners();
+        checkLoginBonus();
+        await checkSurpriseShare();
+
+        // 4. UI描画
+        applyGuestModeUI();
+        renderAllUI();
+    } catch (err) {
+        console.error("Initialization Error:", err);
     }
-
-    // GAS URL初期化
-    const gasInput = document.getElementById('gas-url');
-    if (gasInput && GAS_URL && !GAS_URL.includes("●●●")) {
-        gasInput.value = GAS_URL;
-    }
-
-    // 3. ナビゲーションイベント等のバインド
-    setupEventListeners();
-
-    // 4. ログインボーナスチェック
-    checkLoginBonus();
-
-    // 5. サプライズ共有受信確認
-    await checkSurpriseShare();
-
-    // 6. 画面描画更新
-    applyGuestModeUI();
-    renderAllUI();
 });
 
 function initDefaultGacha() {
@@ -170,10 +154,9 @@ function updateHeaderUI() {
 }
 
 // ------------------------------------------
-// 🔗 イベントリスナーの登録（ボタン動作の復元）
+// 🔗 イベントリスナーの登録
 // ------------------------------------------
 function setupEventListeners() {
-    // ボトムナビゲーション切り替え
     document.querySelectorAll('.bottom-nav .nav-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const target = e.currentTarget.getAttribute('data-target');
@@ -181,7 +164,6 @@ function setupEventListeners() {
         });
     });
 
-    // ⚙️ 作る画面：ガチャ切り替え・新規作成・削除
     const selector = document.getElementById('gacha-selector');
     if (selector) {
         selector.addEventListener('change', (e) => {
@@ -193,22 +175,14 @@ function setupEventListeners() {
     }
 
     const btnCreate = document.getElementById('btn-create-new-gacha');
-    if (btnCreate) {
-        btnCreate.addEventListener('click', createNewGachaPrompt);
-    }
+    if (btnCreate) btnCreate.addEventListener('click', createNewGachaPrompt);
 
     const btnDelete = document.getElementById('btn-delete-gacha');
-    if (btnDelete) {
-        btnDelete.addEventListener('click', deleteCurrentGacha);
-    }
+    if (btnDelete) btnDelete.addEventListener('click', deleteCurrentGacha);
 
-    // 🔗 シェアボタン（GAS連携）
     const btnShare = document.getElementById('btn-share-gacha-gas');
-    if (btnShare) {
-        btnShare.addEventListener('click', exportCurrentGachaShare);
-    }
+    if (btnShare) btnShare.addEventListener('click', exportCurrentGachaShare);
 
-    // 📋 シェアURLモーダルのコピーボタン
     const btnCopyUrl = document.getElementById('btn-copy-share-url');
     if (btnCopyUrl) {
         btnCopyUrl.addEventListener('click', () => {
@@ -221,15 +195,11 @@ function setupEventListeners() {
         });
     }
 
-    // 🖼️ カード実装ボタン
     const btnAddCard = document.getElementById('btn-add-card');
-    if (btnAddCard) {
-        btnAddCard.addEventListener('click', addOrUpdateCard);
-    }
+    if (btnAddCard) btnAddCard.addEventListener('click', addOrUpdateCard);
 }
 
 function switchTab(viewId) {
-    // ゲストモード時は作る画面（view-admin）への遷移をブロック
     if (viewId === 'view-admin') {
         const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
         if (state.isGuestMode || (currentGacha && currentGacha.isLocked)) {
@@ -248,18 +218,12 @@ function switchTab(viewId) {
 }
 
 // ------------------------------------------
-// 📤 ガチャ共有処理（シェアボタン押下時）
+// 📤 ガチャ共有処理
 // ------------------------------------------
 async function exportCurrentGachaShare() {
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
     if (!currentGacha) {
         alert("⚠️ 共有するガチャが選択されていません。");
-        return;
-    }
-
-    if (!GAS_URL || GAS_URL.includes("●●●")) {
-        alert("⚠️ GASのURLが設定されていません。\n「設定」タブの「クラウド連携」にてGASのウェブアプリURLを登録してください。");
-        switchTab('view-settings');
         return;
     }
 
@@ -287,50 +251,41 @@ async function exportCurrentGachaShare() {
 
         if (result.status === 'success') {
             const shareUrl = `${window.location.origin}${window.location.pathname}?surprise=${shareId}`;
-            
             const textarea = document.getElementById('share-url-textarea');
             if (textarea) textarea.value = shareUrl;
-
             openAppModal('modal-share-url');
         } else {
             throw new Error(result.message || "Failed to save share");
         }
     } catch (e) {
         console.error("シェア発行エラー:", e);
-        alert("⚠️ 共有URLの発行に失敗しました。\nGASのアクセス権限（全員）またはデプロイ設定をご確認ください。");
+        alert("⚠️ 共有URLの発行に失敗しました。GASのURLやアクセス権限をご確認ください。");
     } finally {
         if (btnShare) btnShare.textContent = "🔗 シェア";
     }
 }
 
 // ------------------------------------------
-// 🎁 サプライズ共有受取処理
+// 🎁 サプライズ共有受取
 // ------------------------------------------
 async function checkSurpriseShare() {
     const urlParams = new URLSearchParams(window.location.search);
     const surpriseId = urlParams.get('surprise');
-    const apiParam = urlParams.get('api');
-    const activeGasUrl = apiParam ? decodeURIComponent(apiParam) : GAS_URL;
-
     if (!surpriseId) return;
 
-    // 重複受取の自動スキップ
     const alreadyImported = state.gachas.find(g => g.shareId === surpriseId || g.id === 'imported_' + surpriseId);
     if (alreadyImported) {
         state.currentGachaId = alreadyImported.id;
         state.isGuestMode = true;
         await saveLocal();
-        
         window.history.replaceState({}, document.title, window.location.pathname);
         applyGuestModeUI();
         switchTab('view-gacha');
         return;
     }
 
-    if (!activeGasUrl || activeGasUrl.includes("●●●")) return;
-
     try {
-        const res = await fetch(`${activeGasUrl}?action=getShare&shareId=${surpriseId}`, {
+        const res = await fetch(`${GAS_URL}?action=getShare&shareId=${surpriseId}`, {
             method: 'GET',
             redirect: 'follow'
         });
@@ -341,19 +296,16 @@ async function checkSurpriseShare() {
 
         if (result.status === "success" && importedGacha) {
             openAppModal('modal-surprise');
-            
             const openBtn = document.getElementById('btn-surprise-open');
             if (openBtn) {
                 openBtn.onclick = async () => {
                     vibrate();
-                    
                     const newId = 'imported_' + surpriseId;
                     importedGacha.id = newId;
                     importedGacha.shareId = surpriseId;
                     importedGacha.isLocked = true;
-                    
-                    state.isGuestMode = true; 
-                    
+                    state.isGuestMode = true;
+
                     const existingIdx = state.gachas.findIndex(g => g.id === newId);
                     if (existingIdx >= 0) {
                         state.gachas[existingIdx] = importedGacha;
@@ -361,56 +313,41 @@ async function checkSurpriseShare() {
                         state.gachas.push(importedGacha);
                     }
 
-                    state.currentGachaId = newId; 
+                    state.currentGachaId = newId;
                     state.stones = (state.stones || 0) + 10000;
-                    
-                    await saveLocal(); 
-                    
+                    await saveLocal();
+
                     closeAppModal('modal-surprise');
                     window.history.replaceState({}, document.title, window.location.pathname);
-                    
                     applyGuestModeUI();
                     renderAllUI();
                     switchTab('view-gacha');
-                    
-                    setTimeout(() => {
-                        if (typeof confetti === 'function') {
-                            confetti({ particleCount: 120, spread: 100, origin: { y: 0.6 } });
-                        }
-                        vibrate();
-                    }, 100);
 
                     setTimeout(() => {
-                        alert(`✨ ガチャ「${importedGacha.title}」を受け取りました！\n💎 石10,000個をプレゼント！`);
-                    }, 400);
+                        if (typeof confetti === 'function') confetti({ particleCount: 120, spread: 100, origin: { y: 0.6 } });
+                        vibrate();
+                    }, 100);
                 };
             }
         }
     } catch(e) {
         console.error("受信エラー:", e);
-        alert("⚠️ 共有ガチャの取得に失敗しました。");
     }
 }
 
 // ------------------------------------------
-// 🏠 ホーム画面 & 相棒管理
+// 🏠 ホーム & コレクション描画
 // ------------------------------------------
 function renderHomeView() {
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
-    
-    // コンプ率の計算
-    let acquired = 0;
-    let total = 0;
+    let acquired = 0, total = 0;
     if (currentGacha && currentGacha.cards) {
         total = currentGacha.cards.length;
         const inv = state.inventory[currentGacha.id] || {};
-        currentGacha.cards.forEach(c => {
-            if ((inv[c.id] || 0) > 0) acquired++;
-        });
+        currentGacha.cards.forEach(c => { if ((inv[c.id] || 0) > 0) acquired++; });
     }
 
     const percent = total > 0 ? Math.floor((acquired / total) * 100) : 0;
-    
     const percentElem = document.getElementById('comp-percent');
     if (percentElem) percentElem.textContent = percent;
 
@@ -423,7 +360,6 @@ function renderHomeView() {
     const spentElem = document.getElementById('total-spent-stones');
     if (spentElem) spentElem.textContent = (state.totalSpentStones || 0).toLocaleString();
 
-    // 相棒画像の反映
     const partnerImgElem = document.getElementById('home-partner-img');
     if (partnerImgElem) {
         let partnerCard = null;
@@ -434,195 +370,14 @@ function renderHomeView() {
     }
 }
 
-function triggerPartnerSpeech() {
-    vibrate();
-    const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
-    let partnerCard = null;
-    if (currentGacha && currentGacha.cards) {
-        partnerCard = currentGacha.cards.find(c => c.id === state.partnerCardId) || currentGacha.cards[0];
-    }
-
-    const bubble = document.getElementById('home-message');
-    if (bubble) {
-        const desc = partnerCard && partnerCard.desc ? partnerCard.desc : "今日も一緒にがんばろう！";
-        bubble.textContent = desc;
-    }
-}
-
-// ------------------------------------------
-// 🎰 ガチャ画面 & 抽選処理
-// ------------------------------------------
 function renderGachaScreen() {
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
-    
     const mileageElem = document.getElementById('current-mileage');
     if (mileageElem && currentGacha) {
         mileageElem.textContent = state.mileage[currentGacha.id] || 0;
     }
 }
 
-async function pullGacha(count) {
-    const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
-    if (!currentGacha || !currentGacha.cards || currentGacha.cards.length === 0) {
-        alert("⚠️ このガチャにはカードが登録されていません。");
-        return;
-    }
-
-    const cost = count === 1 ? 30 : 300;
-    if ((state.stones || 0) < cost) {
-        alert(`⚠️ 石が足りません！（必要: 💎${cost}）`);
-        return;
-    }
-
-    state.stones -= cost;
-    state.totalSpentStones = (state.totalSpentStones || 0) + cost;
-    state.mileage[currentGacha.id] = (state.mileage[currentGacha.id] || 0) + (count * 10);
-
-    const results = [];
-    for (let i = 0; i < count; i++) {
-        const card = drawOneCard(currentGacha.cards);
-        results.push(card);
-
-        if (!state.inventory[currentGacha.id]) {
-            state.inventory[currentGacha.id] = {};
-        }
-        state.inventory[currentGacha.id][card.id] = (state.inventory[currentGacha.id][card.id] || 0) + 1;
-    }
-
-    await saveLocal();
-    renderAllUI();
-
-    // 結果の描画
-    const container = document.getElementById('gacha-result-container');
-    if (container) {
-        container.innerHTML = '';
-        results.forEach(card => {
-            const cardDiv = document.createElement('div');
-            cardDiv.style.cssText = "display:inline-block; margin:6px; text-align:center; width:75px;";
-            cardDiv.innerHTML = `
-                <div style="width:65px; height:65px; margin:0 auto; background:rgba(255,255,255,0.1); border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
-                    <img src="${escapeHTML(card.img || FALLBACK_IMG)}" style="max-width:100%; max-height:100%; object-fit:contain;" onerror="this.src='${FALLBACK_IMG}'">
-                </div>
-                <div style="font-size:10px; font-weight:bold; margin-top:2px;">${escapeHTML(card.rarity)}</div>
-                <div style="font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHTML(card.name)}</div>
-            `;
-            container.appendChild(cardDiv);
-        });
-    }
-
-    const btnResultShare = document.getElementById('btn-share-pull-result');
-    if (btnResultShare) btnResultShare.classList.remove('hidden');
-
-    vibrate();
-}
-
-function drawOneCard(cards) {
-    let totalWeight = 0;
-    const weighted = cards.map(c => {
-        const w = RARITY_WEIGHTS[c.rarity] || 10.0;
-        totalWeight += w;
-        return { card: c, weight: w };
-    });
-
-    let rand = Math.random() * totalWeight;
-    for (const item of weighted) {
-        if (rand < item.weight) return item.card;
-        rand -= item.weight;
-    }
-    return cards[cards.length - 1];
-}
-
-function sharePullResult() {
-    const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
-    const title = currentGacha ? currentGacha.title : "ガチャ";
-    const text = `✨ 「${title}」を引きました！ #MYGACHAMAKER`;
-    
-    if (navigator.clipboard) {
-        navigator.clipboard.writeText(text);
-        alert("📋 結果のテキストをコピーしました！");
-    }
-}
-
-// ------------------------------------------
-// 🏛️ 天井交換モーダル
-// ------------------------------------------
-function openCeilingModal() {
-    const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
-    if (!currentGacha) return;
-
-    const pt = state.mileage[currentGacha.id] || 0;
-    const container = document.getElementById('ceiling-list-container');
-    if (!container) return;
-    container.innerHTML = '';
-
-    const inv = state.inventory[currentGacha.id] || {};
-    const rarityOrder = ['SLR', 'LR', 'LE', 'UR', 'SSR', 'SR', 'R', 'N', 'C'];
-
-    const sortedCards = [...currentGacha.cards].sort((a, b) => {
-        let indexA = rarityOrder.indexOf(a.rarity);
-        let indexB = rarityOrder.indexOf(b.rarity);
-        if (indexA === -1) indexA = 99;
-        if (indexB === -1) indexB = 99;
-        return indexA - indexB;
-    });
-
-    sortedCards.forEach(card => {
-        const count = inv[card.id] || 0;
-        const isAcquired = count > 0;
-
-        const displayName = isAcquired ? escapeHTML(card.name) : "？？？";
-        const displayImg = isAcquired ? escapeHTML(card.img) : FALLBACK_IMG;
-
-        const div = document.createElement('div');
-        div.style.cssText = "display:flex; align-items:center; justify-content:space-between; padding:8px 12px; border:1px solid rgba(0,0,0,0.1); border-radius:8px; height:60px; box-sizing:border-box; background:var(--panel-bg, #fff);";
-        
-        div.innerHTML = `
-            <div style="display:flex; align-items:center; gap:10px; min-width:0; flex:1;">
-                <div style="width:44px; height:44px; flex-shrink:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.03); border-radius:6px; overflow:hidden;">
-                    <img src="${displayImg}" style="max-width:100%; max-height:100%; width:auto; height:auto; object-fit:contain;" onerror="this.src='${FALLBACK_IMG}'">
-                </div>
-                <div style="min-width:0; flex:1;">
-                    <span style="font-size:10px; font-weight:bold; background:rgba(0,0,0,0.06); padding:2px 6px; border-radius:4px; display:inline-block; margin-bottom:2px;">${escapeHTML(card.rarity)}</span>
-                    <div style="font-size:12px; font-weight:bold; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${displayName}</div>
-                </div>
-            </div>
-            <button class="btn btn-outline" style="flex-shrink:0; margin-left:8px; font-size:11px; padding:6px 12px;" ${pt < 5000 ? 'disabled' : ''} onclick="exchangeCeilingCard('${card.id}')">交換 (5000pt)</button>
-        `;
-        container.appendChild(div);
-    });
-
-    openAppModal('modal-ceiling');
-}
-
-async function exchangeCeilingCard(cardId) {
-    const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
-    if (!currentGacha) return;
-
-    const pt = state.mileage[currentGacha.id] || 0;
-    if (pt < 5000) {
-        alert("⚠️ マイレージポイントが不足しています (5,000pt必要)");
-        return;
-    }
-
-    const card = currentGacha.cards.find(c => c.id === cardId);
-    if (!card) return;
-
-    if (!confirm(`✨ 5,000ptを消費して「${card.name}」を獲得しますか？`)) return;
-
-    state.mileage[currentGacha.id] -= 5000;
-    if (!state.inventory[currentGacha.id]) state.inventory[currentGacha.id] = {};
-    state.inventory[currentGacha.id][cardId] = (state.inventory[currentGacha.id][cardId] || 0) + 1;
-
-    await saveLocal();
-    closeAppModal('modal-ceiling');
-    renderAllUI();
-
-    alert(`🎉 「${card.name}」を獲得しました！`);
-}
-
-// ------------------------------------------
-// 📖 図鑑（コレクション）機能
-// ------------------------------------------
 function renderCollection() {
     const selector = document.getElementById('collection-gacha-selector');
     if (selector) {
@@ -650,9 +405,7 @@ function renderCollection() {
         const isAcquired = count > 0;
 
         const cardDiv = document.createElement('div');
-        cardDiv.className = `collection-item ${isAcquired ? 'acquired' : 'unacquired'}`;
         cardDiv.style.cssText = `display:inline-block; margin:8px; text-align:center; width:85px; padding:8px; border-radius:8px; background:${isAcquired ? '#fff' : 'rgba(0,0,0,0.05)'}; border:1px solid rgba(0,0,0,0.1); cursor:pointer;`;
-        
         cardDiv.onclick = () => openCardDetailModal(card, count);
 
         cardDiv.innerHTML = `
@@ -669,12 +422,20 @@ function renderCollection() {
 
 function openCardDetailModal(card, count) {
     const isAcquired = count > 0;
-    
-    document.getElementById('modal-card-rarity').textContent = card.rarity;
-    document.getElementById('modal-card-img').src = isAcquired ? (card.img || FALLBACK_IMG) : FALLBACK_IMG;
-    document.getElementById('modal-card-name').textContent = isAcquired ? card.name : "？？？";
-    document.getElementById('modal-card-count').textContent = count;
-    document.getElementById('modal-card-desc').textContent = isAcquired ? (card.desc || "セリフなし") : "未所持のカードです。";
+    const rarityElem = document.getElementById('modal-card-rarity');
+    if (rarityElem) rarityElem.textContent = card.rarity;
+
+    const imgElem = document.getElementById('modal-card-img');
+    if (imgElem) imgElem.src = isAcquired ? (card.img || FALLBACK_IMG) : FALLBACK_IMG;
+
+    const nameElem = document.getElementById('modal-card-name');
+    if (nameElem) nameElem.textContent = isAcquired ? card.name : "？？？";
+
+    const countElem = document.getElementById('modal-card-count');
+    if (countElem) countElem.textContent = count;
+
+    const descElem = document.getElementById('modal-card-desc');
+    if (descElem) descElem.textContent = isAcquired ? (card.desc || "セリフなし") : "未所持のカードです。";
 
     const setPartnerBtn = document.getElementById('btn-set-partner');
     if (setPartnerBtn) {
@@ -692,7 +453,7 @@ function openCardDetailModal(card, count) {
 }
 
 // ------------------------------------------
-// ⚙️ ガチャ管理 (作る画面)
+// ⚙️ ガチャ管理
 // ------------------------------------------
 function renderAdminView() {
     const selector = document.getElementById('gacha-selector');
@@ -762,8 +523,6 @@ async function addOrUpdateCard() {
     if (!currentGacha) return;
 
     let imgUrl = FALLBACK_IMG;
-
-    // ファイルが選択されている場合はBase64読み込み
     if (fileInput && fileInput.files && fileInput.files.length > 0) {
         const file = fileInput.files[0];
         imgUrl = await new Promise((resolve) => {
@@ -784,21 +543,18 @@ async function addOrUpdateCard() {
     if (!currentGacha.cards) currentGacha.cards = [];
     currentGacha.cards.push(newCard);
 
-    // クリア
     nameInput.value = '';
     if (descInput) descInput.value = '';
     if (fileInput) fileInput.value = '';
 
     await saveLocal();
     renderAllUI();
-
     alert(`✨ カード「${newCard.name}」を追加しました！`);
 }
 
 async function removeCardFromGacha(idx) {
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
     if (!currentGacha || !currentGacha.cards) return;
-
     if (!confirm(`🗑️ 「${currentGacha.cards[idx].name}」を削除しますか？`)) return;
 
     currentGacha.cards.splice(idx, 1);
@@ -810,12 +566,7 @@ function createNewGachaPrompt() {
     const title = prompt("新しいガチャのタイトルを入力してください:");
     if (!title || !title.trim()) return;
 
-    const newGacha = {
-        id: 'gacha_' + Date.now(),
-        title: title.trim(),
-        cards: []
-    };
-
+    const newGacha = { id: 'gacha_' + Date.now(), title: title.trim(), cards: [] };
     state.gachas.push(newGacha);
     state.currentGachaId = newGacha.id;
     state.isGuestMode = false;
@@ -843,63 +594,7 @@ async function deleteCurrentGacha() {
 }
 
 // ------------------------------------------
-// 🛠️ 設定 & GAS連携
-// ------------------------------------------
-function saveGasUrl() {
-    const input = document.getElementById('gas-url');
-    if (input && input.value.trim()) {
-        GAS_URL = input.value.trim();
-        localStorage.setItem('gacha_gas_url', GAS_URL);
-        alert("✅ GASのURLを保存しました！");
-    }
-}
-
-async function exportData() {
-    const jsonStr = JSON.stringify(state, null, 2);
-    const blob = new Blob([jsonStr], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `GachaMaker_Backup_${new Date().toISOString().slice(0,10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-function importData(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        try {
-            const imported = JSON.parse(e.target.result);
-            if (imported && imported.gachas) {
-                state = imported;
-                await saveLocal();
-                applyGuestModeUI();
-                renderAllUI();
-                alert("✅ データを正常に復元しました！");
-            } else {
-                throw new Error("Invalid format");
-            }
-        } catch (err) {
-            alert("⚠️ バックアップファイルの読み込みに失敗しました。");
-        }
-    };
-    reader.readAsText(file);
-}
-
-function resetData() {
-    if (confirm("⚠️ アプリの全データ（作成したガチャ、所持カード、石）を初期化しますか？")) {
-        indexedDB.deleteDatabase(DB_NAME);
-        localStorage.clear();
-        location.reload();
-    }
-}
-
-// ------------------------------------------
-// 汎用モーダル・エスケープ等
+// 🛠️ モーダル & ユーティリティ
 // ------------------------------------------
 function openAppModal(id) {
     const m = document.getElementById(id);
