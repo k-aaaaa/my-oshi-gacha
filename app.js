@@ -1088,7 +1088,7 @@ function openCeilingModal() {
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
     if (!currentGacha) return;
     const pt = state.mileage[currentGacha.id] || 0;
-    const container = document.getElementById('ceiling-list-container');
+    const container = document.getElementById('ceiling-cards-list');
     container.innerHTML = '';
 
     currentGacha.cards.forEach(card => {
