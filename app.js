@@ -761,11 +761,11 @@ function setupAdminCardListener() {
     const btnAdd = document.getElementById('btn-add-card');
     if (!btnAdd) return;
 
-    // 二重イベント防止用の再作成
-    const newBtnAdd = btnAdd.cloneNode(true);
-    btnAdd.parentNode.replaceChild(newBtnAdd, btnAdd);
+    // 重複防止フラグを設定
+    if (btnAdd.dataset.hasListener) return;
+    btnAdd.dataset.hasListener = "true";
 
-    newBtnAdd.addEventListener('click', async () => {
+    btnAdd.addEventListener('click', async () => {
         if (isPulling) return;
 
         const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
@@ -787,8 +787,8 @@ function setupAdminCardListener() {
                 return alert("編集対象のカードが見つかりません");
             }
 
-            newBtnAdd.innerText = "⏳ 更新中...";
-            newBtnAdd.disabled = true;
+            btnAdd.innerText = "⏳ 更新中...";
+            btnAdd.disabled = true;
             isPulling = true;
 
             try {
@@ -798,7 +798,7 @@ function setupAdminCardListener() {
                 }
 
                 card.name = baseName || card.name;
-                card.rarity = rarity; // レアリティ変更
+                card.rarity = rarity;
                 card.desc = desc || "説明なし";
                 card.img = imgUrl;
 
@@ -810,8 +810,8 @@ function setupAdminCardListener() {
                 console.error("更新失敗:", e);
                 alert("⚠️ カードの更新に失敗しました。");
             } finally {
-                newBtnAdd.innerText = "ガチャに実装する！";
-                newBtnAdd.disabled = false;
+                btnAdd.innerText = "ガチャに実装する！";
+                btnAdd.disabled = false;
                 isPulling = false;
             }
             return;
@@ -823,8 +823,8 @@ function setupAdminCardListener() {
         }
 
         const filesArray = Array.from(imgFiles);
-        newBtnAdd.innerText = `⏳ 処理中 (0/${filesArray.length})...`;
-        newBtnAdd.disabled = true;
+        btnAdd.innerText = `⏳ 処理中 (0/${filesArray.length})...`;
+        btnAdd.disabled = true;
         isPulling = true;
 
         let addedCount = 0;
@@ -832,12 +832,16 @@ function setupAdminCardListener() {
         try {
             for (let i = 0; i < filesArray.length; i++) {
                 const file = filesArray[i];
-                newBtnAdd.innerText = `⏳ 画像処理中 (${i + 1}/${filesArray.length})...`;
+                btnAdd.innerText = `⏳ 画像処理中 (${i + 1}/${filesArray.length})...`;
 
                 const imgUrl = await processCardImageUpload(file);
+                const fileNameWithoutExt = (file && file.name) 
+                    ? file.name.substring(0, file.name.lastIndexOf('.')) || file.name 
+                    : `カード_${i + 1}`;
+
                 let cardName = baseName 
                     ? (filesArray.length > 1 ? `${baseName}_${i + 1}` : baseName)
-                    : file.name.replace(/\.[^/.]+$/, "");
+                    : fileNameWithoutExt;
 
                 const newCard = {
                     id: 'card_' + Date.now() + '_' + i + '_' + Math.floor(Math.random() * 10000),
@@ -859,8 +863,8 @@ function setupAdminCardListener() {
             console.error("一括追加エラー:", err);
             alert("⚠️ 一部画像の読み込みに失敗しました。");
         } finally {
-            newBtnAdd.innerText = "ガチャに実装する！";
-            newBtnAdd.disabled = false;
+            btnAdd.innerText = "ガチャに実装する！";
+            btnAdd.disabled = false;
             isPulling = false;
         }
     });
