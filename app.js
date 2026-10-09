@@ -1377,3 +1377,15 @@ function sharePullResult() {
         prompt("以下のテキストをコピーしてください:", lastPullShareText);
     });
 }
+
+// 💡 手動同期ボタンを押した際の処理をローカル保存＆完了表示に変更する例
+async function manualSync() {
+    try {
+        await saveLocal(); // IndexedDBへ確実に保存
+        vibrate();
+        alert("✅ ローカルデータを正常に保存しました！\n（アプリを閉じてもデータは保持されます）");
+    } catch (e) {
+        console.error(e);
+        alert("⚠️ データの保存に失敗しました。");
+    }
+}
