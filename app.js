@@ -1128,6 +1128,7 @@ function renderAdminView() {
     });
 }
 
+// 📖 図鑑描画（未獲得カードの名前は「？？？」で完全隠蔽）
 function renderCollection() {
     const grid = document.getElementById('collection-grid');
     if (!grid) return;
@@ -1188,7 +1189,7 @@ function renderCollection() {
                     div.style.cssText = 'display:flex; flex-direction:column; justify-content:center; align-items:center; font-size:10px; opacity:0.6; padding:4px; text-align:center;';
                     div.innerHTML = `
                         <div style="font-size:16px; margin-bottom:2px;">❓</div>
-                        <div style="font-size:9px; word-break:break-all;">${escapeHTML(card.name || '未獲得')}</div>
+                        <div style="font-size:9px; word-break:break-all;">？？？</div>
                     `;
                 }
                 grid.appendChild(div);
@@ -1208,7 +1209,7 @@ function renderCollection() {
                 div.style.cssText = 'display:flex; flex-direction:column; justify-content:center; align-items:center; font-size:10px; opacity:0.6; padding:4px; text-align:center;';
                 div.innerHTML = `
                     <div style="font-size:16px; margin-bottom:2px;">❓</div>
-                    <div style="font-size:9px; word-break:break-all;">${escapeHTML(card.name || '未獲得')}</div>
+                    <div style="font-size:9px; word-break:break-all;">？？？</div>
                 `;
             }
             grid.appendChild(div);
@@ -1216,7 +1217,7 @@ function renderCollection() {
     }
 }
 
-// ✏️ 図鑑の詳細モーダル表示（ローカルカード名変更対応）
+// ✏️ 図鑑の詳細モーダル表示（所持しているカードのみ名前変更ボタンを表示）
 function openCardDetailModal(gachaId, cardId) {
     const gacha = getGachaById(gachaId);
     if (!gacha) return;
@@ -1247,19 +1248,27 @@ function openCardDetailModal(gachaId, cardId) {
         };
     }
 
-    // ✏️ シェア先でもローカルのみでカード名を変更できるボタンを動的設置
+    // ✏️ 名前変更ボタンを生成して「閉じる」ボタンの上に設置
+    const modalActions = document.querySelector('#modal-card-detail .modal-actions');
     let btnRename = document.getElementById('btn-rename-card-local');
-    if (!btnRename) {
+    
+    if (!btnRename && modalActions) {
         btnRename = document.createElement('button');
         btnRename.id = 'btn-rename-card-local';
         btnRename.className = 'btn btn-outline';
-        btnRename.style.marginTop = '8px';
-        const modalActions = document.querySelector('#modal-card-detail .modal-actions');
-        if (modalActions && btnPartner) modalActions.insertBefore(btnRename, btnPartner);
+        btnRename.style.cssText = "width: 100%; margin-bottom: 8px;";
+        const closeBtn = document.getElementById('btn-close-modal');
+        if (closeBtn) {
+            modalActions.insertBefore(btnRename, closeBtn);
+        } else {
+            modalActions.appendChild(btnRename);
+        }
     }
-    
-    btnRename.innerHTML = "✏️ カード名を変更";
-    btnRename.onclick = () => renameCardLocally(gachaId, cardId);
+
+    if (btnRename) {
+        btnRename.innerHTML = "✏️ カード名を変更";
+        btnRename.onclick = () => renameCardLocally(gachaId, cardId);
+    }
 
     openAppModal('modal-card-detail');
 }
