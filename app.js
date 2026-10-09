@@ -1,5 +1,5 @@
 // ==========================================
-// PWA Gacha Maker - Recovery & Data Fix
+// PWA Gacha Maker - Complete Image Recovery Code
 // ==========================================
 
 let GAS_URL = localStorage.getItem('gacha_gas_url') || "https://script.google.com/macros/s/AKfycby387y_CisxVLM2mIEqr7LLrI9pIn_jZVNf3KMaU_6E0kQ-6sYNUxO0A_K1OxGNbqug/exec";
@@ -24,7 +24,19 @@ const RARITY_WEIGHTS = {
 };
 
 // ------------------------------------------
-// 💾 IndexedDB (データの安全読み込み)
+// 🖼️ あらゆる画像保存形式に対応する安全取得関数
+// ------------------------------------------
+function getCardImage(card) {
+    if (!card) return FALLBACK_IMG;
+    // 可能性のあるすべての画像プロパティ名をチェック
+    const rawVal = card.img || card.imageData || card.image || card.src || card.url || card.icon || '';
+    if (!rawVal || typeof rawVal !== 'string') return FALLBACK_IMG;
+    if (rawVal.startsWith('data:image') || rawVal.startsWith('http')) return rawVal;
+    return FALLBACK_IMG;
+}
+
+// ------------------------------------------
+// 💾 IndexedDB (データ復元)
 // ------------------------------------------
 const DB_NAME = 'GachaMakerDB';
 const DB_VERSION = 1;
@@ -78,7 +90,7 @@ async function loadLocal() {
 }
 
 // ------------------------------------------
-// 🚀 アプリ初期化
+// 🚀 初期化処理
 // ------------------------------------------
 document.addEventListener('DOMContentLoaded', async () => {
     const hideSplash = () => {
@@ -87,19 +99,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     try {
-        // 1. ローカルデータを最優先で復元（画像のBase64データを含めて読み込み）
         await loadLocal();
 
         if (!state.gachas || state.gachas.length === 0) {
             initDefaultGacha();
         }
 
-        // 2. イベントバインド＆ログボ
         setupEventListeners();
         checkLoginBonus();
         await checkSurpriseShare();
 
-        // 3. UI描画
         applyGuestModeUI();
         renderAllUI();
     } catch (err) {
@@ -152,14 +161,8 @@ function updateHeaderUI() {
     if (stoneElem) stoneElem.textContent = `💎 ${(state.stones || 0).toLocaleString()}`;
 }
 
-// 画像データのプロパティ補正用ヘルパー
-function getCardImage(card) {
-    if (!card) return FALLBACK_IMG;
-    return card.img || card.imageData || card.src || FALLBACK_IMG;
-}
-
 // ------------------------------------------
-// 🔗 イベントリスナー設定
+// 🔗 イベントリスナー
 // ------------------------------------------
 function setupEventListeners() {
     document.querySelectorAll('.bottom-nav .nav-btn').forEach(btn => {
@@ -223,7 +226,7 @@ function switchTab(viewId) {
 }
 
 // ------------------------------------------
-// 📤 共有（シェア）処理
+// 📤 共有処理
 // ------------------------------------------
 async function exportCurrentGachaShare() {
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
@@ -267,9 +270,6 @@ async function exportCurrentGachaShare() {
     }
 }
 
-// ------------------------------------------
-// 🎁 共有受取処理
-// ------------------------------------------
 async function checkSurpriseShare() {
     const urlParams = new URLSearchParams(window.location.search);
     const surpriseId = urlParams.get('surprise');
@@ -333,7 +333,7 @@ async function checkSurpriseShare() {
 }
 
 // ------------------------------------------
-// 🏠 ホーム・コレクション・管理画面
+// 🖼️ 画面描画（画像安全参照）
 // ------------------------------------------
 function renderHomeView() {
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
