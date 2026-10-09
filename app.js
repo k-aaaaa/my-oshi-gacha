@@ -1216,6 +1216,7 @@ function renderCollection() {
     }
 }
 
+// ✏️ 図鑑の詳細モーダル表示（ローカルカード名変更対応）
 function openCardDetailModal(gachaId, cardId) {
     const gacha = getGachaById(gachaId);
     if (!gacha) return;
@@ -1235,6 +1236,7 @@ function openCardDetailModal(gachaId, cardId) {
     if (document.getElementById('modal-card-count')) document.getElementById('modal-card-count').innerText = count;
     if (document.getElementById('modal-card-desc')) document.getElementById('modal-card-desc').innerText = card.desc;
 
+    // 🏠 相棒設定ボタン
     const btnPartner = document.getElementById('btn-set-partner');
     if (btnPartner) {
         btnPartner.onclick = () => {
@@ -1245,7 +1247,45 @@ function openCardDetailModal(gachaId, cardId) {
         };
     }
 
+    // ✏️ シェア先でもローカルのみでカード名を変更できるボタンを動的設置
+    let btnRename = document.getElementById('btn-rename-card-local');
+    if (!btnRename) {
+        btnRename = document.createElement('button');
+        btnRename.id = 'btn-rename-card-local';
+        btnRename.className = 'btn btn-outline';
+        btnRename.style.marginTop = '8px';
+        const modalActions = document.querySelector('#modal-card-detail .modal-actions');
+        if (modalActions && btnPartner) modalActions.insertBefore(btnRename, btnPartner);
+    }
+    
+    btnRename.innerHTML = "✏️ カード名を変更";
+    btnRename.onclick = () => renameCardLocally(gachaId, cardId);
+
     openAppModal('modal-card-detail');
+}
+
+// 端末ローカルのみでカード名を書き換える処理（クラウド/シェア元には影響なし）
+async function renameCardLocally(gachaId, cardId) {
+    vibrate();
+    const gacha = getGachaById(gachaId);
+    if (!gacha) return;
+    const card = gacha.cards.find(c => c.id === cardId);
+    if (!card) return;
+
+    const newName = prompt("新しいカード名を入力してください:", card.name);
+    if (!newName || !newName.trim() || newName.trim() === card.name) return;
+
+    card.name = newName.trim();
+
+    await saveLocal();
+    
+    if (document.getElementById('modal-card-name')) {
+        document.getElementById('modal-card-name').innerText = card.name;
+    }
+    renderCollection();
+    updateUI();
+    
+    alert("✨ この端末でのカード名を変更しました！\n（※元のガチャ共有データには影響しません）");
 }
 
 function openCeilingModal() {
