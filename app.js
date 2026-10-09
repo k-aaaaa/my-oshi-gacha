@@ -1,8 +1,9 @@
 // ==========================================
-// PWA Gacha Maker - Full Logic Code (Fix Only)
+// PWA Gacha Maker - Code with Embedded GAS URL
 // ==========================================
 
-let GAS_URL = localStorage.getItem('gacha_gas_url') || "https://script.google.com/macros/s/AKfycbx05kkQZv0hMBB0tN4MEuwpGtKMWm6KvUEh98GB8ZqkksUNvr0PHlOhAgTjeo1xQgJe/exec";
+// ご提示いただいたGAS URLを直接設定（localStorageにある場合はそれを優先）
+let GAS_URL = localStorage.getItem('gacha_gas_url') || "https://script.google.com/macros/s/AKfycby387y_CisxVLM2mIEqr7LLrI9pIn_jZVNf3KMaU_6E0kQ-6sYNUxO0A_K1OxGNbqug/exec";
 const FALLBACK_IMG = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23eee'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='14' fill='%23aaa'>No Image</text></svg>";
 
 // アプリ共通ステート
@@ -90,12 +91,12 @@ async function loadLocal() {
 // 🚀 アプリ初期化 (フリーズ防止策適用)
 // ------------------------------------------
 document.addEventListener('DOMContentLoaded', async () => {
-    // 画面フリーズ（プレゼント画面で停止）を絶対防ぐ安全タイマー
+    // プレゼント画面で止まるのを防止する確実な消去処理
     const hideSplash = () => {
         const splash = document.getElementById('splash');
         if (splash) splash.classList.add('hidden');
     };
-    setTimeout(hideSplash, 600);
+    setTimeout(hideSplash, 500);
 
     try {
         // 1. ローカルストレージ復元（データ保護）
@@ -197,7 +198,7 @@ function setupEventListeners() {
     const btnDelete = document.getElementById('btn-delete-gacha');
     if (btnDelete) btnDelete.onclick = deleteCurrentGacha;
 
-    // 修正点: index.htmlの btn-share-gacha-gas と正しく連結
+    // シェアボタン (index.html の btn-share-gacha-gas と接続)
     const btnShare = document.getElementById('btn-share-gacha-gas');
     if (btnShare) btnShare.onclick = exportCurrentGachaShare;
 
@@ -236,18 +237,12 @@ function switchTab(viewId) {
 }
 
 // ------------------------------------------
-// 📤 共有（シェア）処理 - 修正対応箇所
+// 📤 共有（シェア）処理
 // ------------------------------------------
 async function exportCurrentGachaShare() {
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
     if (!currentGacha) {
         alert("⚠️ 共有するガチャが選択されていません。");
-        return;
-    }
-
-    if (!GAS_URL || GAS_URL.includes("YOUR_GAS_WEB_APP_URL_HERE")) {
-        alert("⚠️ GASのURLが未設定です。「設定」タブでGASのURLを入力してください。");
-        switchTab('view-settings');
         return;
     }
 
@@ -278,14 +273,13 @@ async function exportCurrentGachaShare() {
             const textarea = document.getElementById('share-url-textarea');
             if (textarea) textarea.value = shareUrl;
             
-            // index.html の modal-share-url を表示
             openAppModal('modal-share-url');
         } else {
             throw new Error(result.message || "Failed to save share");
         }
     } catch (e) {
         console.error("シェア発行エラー:", e);
-        alert("⚠️ 共有URLの発行に失敗しました。GASのURLおよびデプロイ権限（全員）をご確認ください。");
+        alert("⚠️ 共有URLの発行に失敗しました。GASのアクセス設定（全員）をご確認ください。");
     } finally {
         if (btnShare) btnShare.textContent = "🔗 シェア";
     }
@@ -297,7 +291,7 @@ async function exportCurrentGachaShare() {
 async function checkSurpriseShare() {
     const urlParams = new URLSearchParams(window.location.search);
     const surpriseId = urlParams.get('surprise');
-    if (!surpriseId) return;
+    if (!surpriseId || !GAS_URL) return;
 
     const alreadyImported = state.gachas.find(g => g.shareId === surpriseId || g.id === 'imported_' + surpriseId);
     if (alreadyImported) {
@@ -309,8 +303,6 @@ async function checkSurpriseShare() {
         switchTab('view-gacha');
         return;
     }
-
-    if (!GAS_URL || GAS_URL.includes("YOUR_GAS_WEB_APP_URL_HERE")) return;
 
     try {
         const res = await fetch(`${GAS_URL}?action=getShare&shareId=${surpriseId}`, {
