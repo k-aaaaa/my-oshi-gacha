@@ -248,7 +248,7 @@
 
     </main>
 
-    <!-- モーダル群 (すべて body の内側に配置) -->
+<!-- モーダル群 (すべて body の内側に配置) -->
     <div id="modal-surprise" class="modal hidden">
         <div class="modal-content">
             <h2>🎁 サプライズガチャ到着！</h2>
@@ -256,6 +256,15 @@
             <div class="modal-actions" style="margin-top: 20px;">
                 <button id="btn-surprise-open" class="btn btn-primary">ガチャを開封する！</button>
             </div>
+        </div>
+    </div>
+
+    <!-- 🎰 ガチャ結果表示モーダル（このようにサプライズモーダルの外に置く） -->
+    <div id="modal-gacha-result" class="modal hidden">
+        <div class="modal-content" style="max-height: 85vh; overflow-y: auto;">
+            <h2>🎰 ガチャ獲得結果</h2>
+            <div id="gacha-result-grid" class="collection-grid" style="margin: 15px 0;"></div>
+            <button onclick="closeAppModal('modal-gacha-result')" class="btn btn-primary w-full">確認</button>
         </div>
     </div>
 
