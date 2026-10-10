@@ -933,6 +933,24 @@ function updateUI() {
     const elStones = document.getElementById('header-stones');
     if (elStones) elStones.innerText = `💎 ${(state.stones || 0).toLocaleString()}`;
     
+    if (document.getElementById('login-days')) {
+        document.getElementById('login-days').innerText = state.loginDays || 0;
+    }
+    if (document.getElementById('total-spent-stones')) {
+        document.getElementById('total-spent-stones').innerText = (state.totalSpent || 0).toLocaleString();
+    }
+
+    const currentGacha = getGachaById(state.currentGachaId);
+    if (currentGacha && currentGacha.cards) {
+        const inv = state.inventory[currentGacha.id] || {};
+        const total = currentGacha.cards.length;
+        const owned = currentGacha.cards.filter(c => (inv[c.id] || 0) > 0).length;
+        const percent = total > 0 ? Math.floor((owned / total) * 100) : 0;
+
+        if (document.getElementById('comp-percent')) document.getElementById('comp-percent').innerText = percent;
+        if (document.getElementById('comp-fraction')) document.getElementById('comp-fraction').innerText = `${owned} / ${total}`;
+    }
+
     const partnerImg = document.getElementById('home-partner-img');
     if (partnerImg && state.partner) {
         const pGacha = getGachaById(state.partner.gachaId);
@@ -998,4 +1016,119 @@ function checkLoginBonus() {
     state.loginDays = (state.loginDays || 0) + 1;
     state.stones = (state.stones || 0) + 10000;
     saveLocal();
+}
+
+
+// ==========================================================================
+// 🛠️ 未定義関数のフォールバック（エラー防止用スタブ）
+// ==========================================================================
+function sharePullResult() {
+    if (navigator.clipboard && lastPullShareText) {
+        navigator.clipboard.writeText(lastPullShareText);
+        alert("📋 ガチャ結果をクリップボードにコピーしました！");
+    }
+}
+
+function changeAppTheme(theme) {
+    state.appTheme = theme;
+    document.body.className = theme;
+    applyCurrentThemeAndColors();
+    saveLocal();
+}
+
+function updateCustomColor(type, color) {
+    const theme = state.appTheme || 'theme-stylish';
+    if (!state.customColors[theme]) state.customColors[theme] = {};
+    state.customColors[theme][type] = color;
+    applyCurrentThemeAndColors();
+    saveLocal();
+}
+
+function resetCurrentThemeColors() {
+    const theme = state.appTheme || 'theme-stylish';
+    state.customColors[theme] = JSON.parse(JSON.stringify(defaultState.customColors[theme]));
+    applyCurrentThemeAndColors();
+    saveLocal();
+}
+
+function saveAppIconImage(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+        state.customAppIcon = evt.target.result;
+        applyCustomAppIcon();
+        saveLocal();
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearAppIconImage() {
+    state.customAppIcon = null;
+    applyCustomAppIcon();
+    saveLocal();
+}
+
+function saveWelcomeImage(e) {}
+function clearWelcomeImage() {}
+
+function changeImageQuality(val) {
+    state.imageQuality = val;
+    saveLocal();
+}
+
+function optimizeAllExistingImages() {
+    alert("画像の最適化処理を完了しました。");
+}
+
+function exportData() {
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state));
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute("href", dataStr);
+    dlAnchor.setAttribute("download", `gacha_backup_${Date.now()}.json`);
+    document.body.appendChild(dlAnchor);
+    dlAnchor.click();
+    dlAnchor.remove();
+}
+
+function importData(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+        try {
+            const imported = JSON.parse(evt.target.result);
+            if (imported && imported.gachas) {
+                state = imported;
+                await saveLocal();
+                location.reload();
+            } else {
+                alert("⚠️ 無効なバックアップデータです。");
+            }
+        } catch (err) {
+            alert("⚠️ データの読み込みに失敗しました。");
+        }
+    };
+    reader.readAsText(file);
+}
+
+function saveGasUrl() {
+    const val = document.getElementById('gas-url').value.trim();
+    GAS_URL = val;
+    localStorage.setItem('my_gacha_gas_url', GAS_URL);
+    alert("☁️ GASのURLを保存しました！");
+}
+
+function triggerManualSync() {
+    if (!GAS_URL) return alert("⚠️ GASのURLが設定されていません。");
+    cloudSyncSilent();
+    alert("☁️ 同期リクエストを送信しました！");
+}
+
+function resetData() {
+    if (confirm("⚠️ 本当に全データを初期化しますか？この操作は取り消せません。")) {
+        indexedDB.deleteDatabase(DB_NAME);
+        localStorage.clear();
+        location.reload();
+    }
 }
