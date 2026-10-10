@@ -106,7 +106,7 @@ function getGachaById(id) {
     if (!state) return null;
     const g1 = state.gachas.find(g => g.id === id);
     if (g1) return g1;
-    if (state.archivedGachas) return state.archivedGachas.find(g => g.id === id);
+    if (state.archivedGachas) return state.archivedGachas.find(g => g.id === id) || null;
     return null;
 }
 
@@ -181,7 +181,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (state.autoSync === undefined) state.autoSync = true;
     if (state.isGuestMode === undefined) state.isGuestMode = false;
 
-    // ガチャ選択状態の安全補正
     if (state.gachas && state.gachas.length > 0) {
         const exists = state.gachas.some(g => g.id === state.currentGachaId);
         if (!exists) state.currentGachaId = state.gachas[0].id;
@@ -219,6 +218,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 
     setupAdminCardListener();
     setupAdminGachaListeners();
+    setupAppEventListeners();
 });
 
 window.addEventListener('popstate', (e) => {
@@ -375,7 +375,7 @@ async function checkSurpriseShare() {
 }
 
 // ------------------------------------------
-// 🎰 100連ボタン強制生成＆ガチャ描画エンジン
+// 🎰 ガチャ描画・実行エンジン
 // ------------------------------------------
 function renderGachaScreen() {
     if (!state || !state.gachas || state.gachas.length === 0) return;
@@ -395,7 +395,6 @@ function renderGachaScreen() {
 
     if (statusText) statusText.innerText = "最高レアを引き当てろ！";
 
-    // アクション領域がある場合は必ずボタン3種（単発・10連・100連）を描画
     if (actionControls) {
         actionControls.innerHTML = `
             <button id="btn-pull-1" class="btn btn-gacha" onclick="pullGacha(1)" ${isPulling ? 'disabled' : ''}>単発 (💎30)</button>
@@ -403,7 +402,6 @@ function renderGachaScreen() {
             <button id="btn-pull-100" class="btn btn-gacha-10" style="background: linear-gradient(135deg, #ff9500, #ff5e00); color: white; font-weight: bold;" onclick="pullGacha(100)" ${isPulling ? 'disabled' : ''}>🔥 100連 (💎3,000)</button>
         `;
     } else {
-        // HTML上に直接ボタンが存在する場合のフォールバック
         const b1 = document.getElementById('btn-pull-1');
         const b10 = document.getElementById('btn-pull-10');
         const b100 = document.getElementById('btn-pull-100');
@@ -596,8 +594,7 @@ function setupAdminCardListener() {
 
 function setupAdminGachaListeners() {
     const btnCreate = document.getElementById('btn-create-gacha');
-    if (btnCreate && !btnCreate.dataset.hasListener) {
-        btnCreate.dataset.hasListener = "true";
+    if (btnCreate) {
         btnCreate.onclick = () => {
             const title = prompt("新しいガチャのタイトルを入力してください:");
             if (!title || !title.trim()) return;
@@ -613,6 +610,27 @@ function setupAdminGachaListeners() {
             renderGachaSelectors();
             renderAdminView();
             alert("✨ 新しいガチャを作成しました！");
+        };
+    }
+
+    const btnDelete = document.getElementById('btn-delete-gacha');
+    if (btnDelete) {
+        btnDelete.onclick = () => {
+            if (state.gachas.length <= 1) return alert("⚠️ ガチャは最低1つ必要なため削除できません。");
+            const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
+            if (!currentGacha || currentGacha.isLocked) return alert("🔒 このガチャは削除できません。");
+
+            if (confirm(`本当にガチャ「${currentGacha.title}」を削除しますか？`)) {
+                state.gachas = state.gachas.filter(g => g.id !== currentGacha.id);
+                delete state.inventory[currentGacha.id];
+                delete state.mileage[currentGacha.id];
+                state.currentGachaId = state.gachas[0].id;
+
+                saveLocal();
+                renderGachaSelectors();
+                renderAdminView();
+                alert("🗑️ ガチャを削除しました。");
+            }
         };
     }
 }
@@ -925,6 +943,7 @@ function exchangeCeilingCard(cardId) {
     state.inventory[currentGacha.id][cardId] = (state.inventory[currentGacha.id][cardId] || 0) + 1;
 
     saveLocal();
+    renderGachaScreen();
     closeAppModal('modal-ceiling');
     alert("✨ 指定カードを獲得しました！");
 }
@@ -933,6 +952,12 @@ function updateUI() {
     const elStones = document.getElementById('header-stones');
     if (elStones) elStones.innerText = `💎 ${(state.stones || 0).toLocaleString()}`;
     
+    const currentGacha = getGachaById(state.currentGachaId);
+    const headerTitle = document.getElementById('current-gacha-title');
+    if (headerTitle && currentGacha) {
+        headerTitle.innerText = currentGacha.title;
+    }
+
     if (document.getElementById('login-days')) {
         document.getElementById('login-days').innerText = state.loginDays || 0;
     }
@@ -940,7 +965,6 @@ function updateUI() {
         document.getElementById('total-spent-stones').innerText = (state.totalSpent || 0).toLocaleString();
     }
 
-    const currentGacha = getGachaById(state.currentGachaId);
     if (currentGacha && currentGacha.cards) {
         const inv = state.inventory[currentGacha.id] || {};
         const total = currentGacha.cards.length;
@@ -952,18 +976,21 @@ function updateUI() {
     }
 
     const partnerImg = document.getElementById('home-partner-img');
-    if (partnerImg && state.partner) {
-        const pGacha = getGachaById(state.partner.gachaId);
-        if (pGacha) {
-            const pCard = pGacha.cards.find(c => c.id === state.partner.cardId);
+    if (partnerImg) {
+        if (state.partner) {
+            const pGacha = getGachaById(state.partner.gachaId);
+            const pCard = pGacha ? pGacha.cards.find(c => c.id === state.partner.cardId) : null;
             if (pCard) {
                 partnerImg.src = getCardImage(pCard); 
                 partnerImg.style.objectFit = 'contain';
                 partnerImg.onerror = () => { partnerImg.src = FALLBACK_IMG; };
+            } else {
+                state.partner = null;
+                partnerImg.src = FALLBACK_IMG;
             }
+        } else {
+            partnerImg.src = FALLBACK_IMG;
         }
-    } else if (partnerImg) {
-        partnerImg.src = FALLBACK_IMG;
     }
 }
 
@@ -1017,7 +1044,6 @@ function checkLoginBonus() {
     state.stones = (state.stones || 0) + 10000;
     saveLocal();
 }
-
 
 // ==========================================================================
 // 🛠️ 未定義関数のフォールバック（エラー防止用スタブ）
@@ -1130,5 +1156,93 @@ function resetData() {
         indexedDB.deleteDatabase(DB_NAME);
         localStorage.clear();
         location.reload();
+    }
+}
+
+// ==========================================================================
+// 🔗 ガチャ共有・図鑑リセットなどの完全連動用イベント処理
+// ==========================================================================
+async function shareCurrentGachaViaGAS() {
+    if (!GAS_URL) {
+        return alert("⚠️ 設定画面でクラウド(GAS)のURLを保存してください。");
+    }
+
+    const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
+    if (!currentGacha) return alert("⚠️ 対象のガチャが見つかりません。");
+    if (currentGacha.cards.length === 0) return alert("⚠️ カードが1枚も登録されていないガチャは共有できません。");
+
+    const btnShare = document.getElementById('btn-share-gacha-gas');
+    if (btnShare) {
+        btnShare.innerText = "⏳ 共有URL発行中...";
+        btnShare.disabled = true;
+    }
+
+    try {
+        const payload = {
+            action: "createShare",
+            gacha: currentGacha
+        };
+
+        const res = await fetch(GAS_URL, {
+            method: "POST",
+            body: JSON.stringify(payload),
+            headers: { "Content-Type": "text/plain" }
+        });
+        
+        const result = await res.json();
+
+        if (result.status === "success" && result.shareId) {
+            const baseUrl = window.location.origin + window.location.pathname;
+            const shareUrl = `${baseUrl}?surprise=${result.shareId}&api=${encodeURIComponent(GAS_URL)}`;
+
+            const textarea = document.getElementById('share-url-textarea');
+            if (textarea) textarea.value = shareUrl;
+
+            openAppModal('modal-share-url');
+        } else {
+            alert("⚠️ 共有URLの発行に失敗しました。GAS側の設定をご確認ください。");
+        }
+    } catch (err) {
+        console.error("共有エラー:", err);
+        alert("⚠️ 通信エラーにより共有URLを発行できませんでした。");
+    } finally {
+        if (btnShare) {
+            btnShare.innerText = "🔗 シェア";
+            btnShare.disabled = false;
+        }
+    }
+}
+
+function setupAppEventListeners() {
+    const btnShareGas = document.getElementById('btn-share-gacha-gas');
+    if (btnShareGas) {
+        btnShareGas.onclick = () => shareCurrentGachaViaGAS();
+    }
+
+    const btnCopyUrl = document.getElementById('btn-copy-share-url');
+    if (btnCopyUrl) {
+        btnCopyUrl.onclick = () => {
+            const textarea = document.getElementById('share-url-textarea');
+            if (textarea && textarea.value) {
+                textarea.select();
+                navigator.clipboard.writeText(textarea.value);
+                alert("📋 共有URLをクリップボードにコピーしました！");
+            }
+        };
+    }
+
+    const btnResetCol = document.getElementById('btn-reset-collection');
+    if (btnResetCol) {
+        btnResetCol.onclick = () => {
+            const selEl = document.getElementById('collection-gacha-selector');
+            if (!selEl) return;
+            const currentGachaId = selEl.value;
+            if (confirm("⚠️ このガチャの所持カード記録（図鑑）をリセットしますか？")) {
+                delete state.inventory[currentGachaId];
+                saveLocal();
+                renderCollection();
+                alert("✨ この図鑑の記録をリセットしました。");
+            }
+        };
     }
 }
