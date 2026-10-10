@@ -1169,7 +1169,9 @@ async function shareCurrentGachaViaGAS() {
 
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
     if (!currentGacha) return alert("⚠️ 対象のガチャが見つかりません。");
-    if (currentGacha.cards.length === 0) return alert("⚠️ カードが1枚も登録されていないガチャは共有できません。");
+    if (!currentGacha.cards || currentGacha.cards.length === 0) {
+        return alert("⚠️ カードが1枚も登録されていないガチャは共有できません。");
+    }
 
     const btnShare = document.getElementById('btn-share-gacha-gas');
     if (btnShare) {
@@ -1189,7 +1191,14 @@ async function shareCurrentGachaViaGAS() {
             headers: { "Content-Type": "text/plain" }
         });
         
-        const result = await res.json();
+        const text = await res.text();
+        let result;
+        try {
+            result = JSON.parse(text);
+        } catch(e) {
+            console.error("GASレスポンス解析失敗:", text);
+            return alert("⚠️ GASから不正なレスポンスが返されました。GASのアクセス権限が「全員」になっているか確認してください。");
+        }
 
         if (result.status === "success" && result.shareId) {
             const baseUrl = window.location.origin + window.location.pathname;
@@ -1200,10 +1209,10 @@ async function shareCurrentGachaViaGAS() {
 
             openAppModal('modal-share-url');
         } else {
-            alert("⚠️ 共有URLの発行に失敗しました。GAS側の設定をご確認ください。");
+            alert(`⚠️ 共有失敗: ${result.message || "不明なエラー"}`);
         }
     } catch (err) {
-        console.error("共有エラー:", err);
+        console.error("共有通信エラー:", err);
         alert("⚠️ 通信エラーにより共有URLを発行できませんでした。");
     } finally {
         if (btnShare) {
