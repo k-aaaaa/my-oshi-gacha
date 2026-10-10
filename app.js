@@ -354,12 +354,14 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 async function checkSurpriseShare() {
     const urlParams = new URLSearchParams(window.location.search);
     const surpriseId = urlParams.get('surprise');
-    const apiParam = urlParams.get('api');
-    const activeGasUrl = apiParam ? decodeURIComponent(apiParam) : GAS_URL;
+    
+    // URLに api パラメータがなければ DEFAULT_GAS_URL を使用
+    const activeGasUrl = urlParams.get('api') ? decodeURIComponent(urlParams.get('api')) : GAS_URL;
 
     if (surpriseId && activeGasUrl) {
         try {
-            const res = await fetch(activeGasUrl + "?action=getShare&shareId=" + surpriseId);
+            // 明確に action=getShare と shareId を付与してリクエスト
+            const res = await fetch(`${activeGasUrl}?action=getShare&shareId=${surpriseId}`);
             const result = await res.json();
             const importedGacha = result.data || (result.cards ? result : null);
 
@@ -377,19 +379,16 @@ async function checkSurpriseShare() {
                     state.gachas.push(importedGacha);
                 }
 
-                // 共有されたガチャを固定選択 & 石をプレゼント
                 state.currentGachaId = targetId; 
                 state.stones = Math.max(state.stones || 0, 10000); 
                 
                 await saveLocal(); 
 
-                // UIの反映とガチャ画面へのダイレクト遷移
                 applyGuestModeUI();
                 renderGachaSelectors();
                 switchTab('view-gacha', false);
                 renderGachaScreen();
                 
-                // 開封の紙吹雪演出のみ軽く実行
                 fireConfetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
             } else {
                 alert("⚠️ 共有ガチャの取得に失敗したか、期限切れです。");
