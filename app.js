@@ -72,7 +72,11 @@ function getCardImage(card) {
 // 📦 アプリのグローバル状態
 // ==========================================================================
 let state = null;
-let GAS_URL = localStorage.getItem('my_gacha_gas_url') || "";
+
+// 🔽 あらかじめ自分のGAS URL（/execで終わるURL）をここに直書きしておく
+const DEFAULT_GAS_URL = "https://script.google.com/macros/s/ここにあなたのGASのIDを入れる/exec";
+let GAS_URL = localStorage.getItem('my_gacha_gas_url') || DEFAULT_GAS_URL;
+
 let lastPullShareText = "";
 let isPulling = false; 
 let syncTimeoutTimer = null;
