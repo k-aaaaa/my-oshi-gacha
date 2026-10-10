@@ -1208,27 +1208,56 @@ function resetData() {
 // ==========================================================================
 // 🔗 ガチャ共有・図鑑リセットなどの完全連動用イベント処理
 // ==========================================================================
+// 画像をBase64のまま超軽量（横幅最大200px、画質0.3）に圧縮する関数
+async function compressImageForShare(base64Str) {
+    if (!base64Str || !base64Str.startsWith('data:image')) return base64Str;
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const maxW = 200;
+            let scale = img.width > maxW ? maxW / img.width : 1;
+            canvas.width = Math.floor(img.width * scale);
+            canvas.height = Math.floor(img.height * scale);
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', 0.3));
+        };
+        img.onerror = () => resolve(base64Str);
+        img.src = base64Str;
+    });
+}
+
+// 共有用ボタンの処理の中に組み込む
 async function shareCurrentGachaViaGAS() {
-    if (!GAS_URL) {
-        return alert("⚠️ 設定画面でクラウド(GAS)のURLを保存してください。");
-    }
+    if (!GAS_URL) return alert("⚠️ GASのURLが設定されていません。");
 
     const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
-    if (!currentGacha) return alert("⚠️ 対象のガチャが見つかりません。");
-    if (!currentGacha.cards || currentGacha.cards.length === 0) {
-        return alert("⚠️ カードが1枚も登録されていないガチャは共有できません。");
+    if (!currentGacha || !currentGacha.cards || currentGacha.cards.length === 0) {
+        return alert("⚠️ カードが登録されていないガチャは共有できません。");
     }
 
     const btnShare = document.getElementById('btn-share-gacha-gas');
     if (btnShare) {
-        btnShare.innerText = "⏳ 共有URL発行中...";
+        btnShare.innerText = "⏳ データを軽量化して送信中...";
         btnShare.disabled = true;
     }
 
     try {
+        // 1. シェア用にガチャデータを複製して画像だけ軽量化する
+        const compressedGacha = JSON.parse(JSON.stringify(currentGacha));
+        for (let card of compressedGacha.cards) {
+            if (card.img) {
+                card.img = await compressImageForShare(card.img);
+            }
+        }
+
+        // 2. 軽量化したデータをGASへ送信
         const payload = {
             action: "createShare",
-            gacha: currentGacha
+            gacha: compressedGacha
         };
 
         const res = await fetch(GAS_URL, {
@@ -1237,17 +1266,11 @@ async function shareCurrentGachaViaGAS() {
             headers: { "Content-Type": "text/plain" }
         });
         
-        const text = await res.text();
-        let result;
-        try {
-            result = JSON.parse(text);
-        } catch(e) {
-            console.error("GASレスポンス解析失敗:", text);
-            return alert("⚠️ GASから不正なレスポンスが返されました。GASのアクセス権限が「全員」になっているか確認してください。");
-        }
+        const result = await res.json();
 
         if (result.status === "success" && result.shareId) {
             const baseUrl = window.location.origin + window.location.pathname;
+            // 短いURLを発行！
             const shareUrl = `${baseUrl}?surprise=${result.shareId}`;
 
             const textarea = document.getElementById('share-url-textarea');
