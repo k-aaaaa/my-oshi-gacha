@@ -528,10 +528,9 @@ async function processCardImageUpload(file) {
 
 function setupAdminCardListener() {
     const btnAdd = document.getElementById('btn-add-card');
-    if (!btnAdd || btnAdd.dataset.hasListener) return;
-    btnAdd.dataset.hasListener = "true";
+    if (!btnAdd) return;
 
-    btnAdd.addEventListener('click', async () => {
+    btnAdd.onclick = async () => {
         const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
         if (!currentGacha || currentGacha.isLocked) return alert("🔒 編集できないガチャです");
 
@@ -592,7 +591,7 @@ function setupAdminCardListener() {
             btnAdd.innerText = "ガチャに実装する！";
             btnAdd.disabled = false;
         }
-    });
+    };
 }
 
 function setupAdminGachaListeners() {
