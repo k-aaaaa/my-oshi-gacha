@@ -137,10 +137,7 @@ function applyGuestModeUI() {
     const isGuest = isSurpriseUrl || (state && state.isGuestMode) || (currentGacha && currentGacha.isLocked);
 
     if (isGuest) {
-        // 「作る」メニューを隠す
         if (adminNavBtn) adminNavBtn.style.display = 'none';
-        
-        // 管理画面を開こうとしたら強制的にガチャ画面へ移動
         const adminView = document.getElementById('view-admin');
         if (adminView && adminView.classList.contains('active')) {
             switchTab('view-gacha', false);
@@ -157,7 +154,6 @@ function renderGachaSelectors() {
         const el = document.getElementById(id);
         if (!el) return;
 
-        // シェア受取人の場合はガチャ切替ドロップダウン自体を隠して他のガチャを見せない
         if (isGuest && id === 'collection-gacha-selector') {
             el.style.display = 'none';
         } else {
@@ -175,16 +171,18 @@ function renderGachaSelectors() {
     });
 
     const gachaSel = document.getElementById('gacha-selector');
-    if (gachaSel && !gachaSel.dataset.hasListener) {
-        gachaSel.dataset.hasListener = "true";
-        gachaSel.addEventListener('change', (e) => {
+    if (gachaSel) {
+        gachaSel.onchange = (e) => {
             state.currentGachaId = e.target.value;
             saveLocal();
             renderAdminView();
-        });
+        };
     }
 }
 
+// ------------------------------------------
+// 🚀 アプリ初期化
+// ------------------------------------------
 window.addEventListener('DOMContentLoaded', async () => {
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js').catch(err => console.error("SW登録失敗:", err));
@@ -354,13 +352,10 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 async function checkSurpriseShare() {
     const urlParams = new URLSearchParams(window.location.search);
     const surpriseId = urlParams.get('surprise');
-    
-    // URLに api パラメータがなければ DEFAULT_GAS_URL を使用
     const activeGasUrl = urlParams.get('api') ? decodeURIComponent(urlParams.get('api')) : GAS_URL;
 
     if (surpriseId && activeGasUrl) {
         try {
-            // 明確に action=getShare と shareId を付与してリクエスト
             const res = await fetch(`${activeGasUrl}?action=getShare&shareId=${surpriseId}`);
             const result = await res.json();
             const importedGacha = result.data || (result.cards ? result : null);
@@ -639,29 +634,6 @@ function setupAdminGachaListeners() {
         };
     }
 
-    // 🔽 ここを追加（ガチャ削除処理）
-    const btnDelete = document.getElementById('btn-delete-gacha');
-    if (btnDelete) {
-        btnDelete.onclick = () => {
-            if (state.gachas.length <= 1) return alert("⚠️ ガチャは最低1つ必要なため削除できません。");
-            const currentGacha = state.gachas.find(g => g.id === state.currentGachaId);
-            if (!currentGacha || currentGacha.isLocked) return alert("🔒 このガチャは削除できません。");
-
-            if (confirm(`本当にガチャ「${currentGacha.title}」を削除しますか？`)) {
-                state.gachas = state.gachas.filter(g => g.id !== currentGacha.id);
-                delete state.inventory[currentGacha.id];
-                delete state.mileage[currentGacha.id];
-                state.currentGachaId = state.gachas[0].id;
-
-                saveLocal();
-                renderGachaSelectors();
-                renderAdminView();
-                alert("🗑️ ガチャを削除しました。");
-            }
-        };
-    }
-}
-
     const btnDelete = document.getElementById('btn-delete-gacha');
     if (btnDelete) {
         btnDelete.onclick = () => {
@@ -731,31 +703,6 @@ function deleteCard(cardId) {
     currentGacha.cards = currentGacha.cards.filter(c => c.id !== cardId);
     saveLocal();
     renderAdminView();
-}
-
-function renderGachaSelectors() {
-    ['gacha-selector', 'collection-gacha-selector'].forEach(id => {
-        const el = document.getElementById(id);
-        if (!el) return;
-        el.innerHTML = '';
-        state.gachas.forEach(g => {
-            const opt = document.createElement('option');
-            opt.value = g.id;
-            opt.innerText = (g.isLocked ? "🔒 " : "") + g.title;
-            if (g.id === state.currentGachaId) opt.selected = true;
-            el.appendChild(opt);
-        });
-    });
-
-    const gachaSel = document.getElementById('gacha-selector');
-    if (gachaSel && !gachaSel.dataset.hasListener) {
-        gachaSel.dataset.hasListener = "true";
-        gachaSel.addEventListener('change', (e) => {
-            state.currentGachaId = e.target.value;
-            saveLocal();
-            renderAdminView();
-        });
-    }
 }
 
 function renderAdminView() {
@@ -1211,7 +1158,6 @@ function resetData() {
 // ==========================================================================
 // 🔗 ガチャ共有・図鑑リセットなどの完全連動用イベント処理
 // ==========================================================================
-// 画像をBase64のまま超軽量（横幅最大200px、画質0.3）に圧縮する関数
 async function compressImageForShare(base64Str) {
     if (!base64Str || !base64Str.startsWith('data:image')) return base64Str;
     return new Promise((resolve) => {
@@ -1233,7 +1179,6 @@ async function compressImageForShare(base64Str) {
     });
 }
 
-// 共有用ボタンの処理の中に組み込む
 async function shareCurrentGachaViaGAS() {
     if (!GAS_URL) return alert("⚠️ GASのURLが設定されていません。");
 
@@ -1249,7 +1194,6 @@ async function shareCurrentGachaViaGAS() {
     }
 
     try {
-        // 1. シェア用にガチャデータを複製して画像だけ軽量化する
         const compressedGacha = JSON.parse(JSON.stringify(currentGacha));
         for (let card of compressedGacha.cards) {
             if (card.img) {
@@ -1257,7 +1201,6 @@ async function shareCurrentGachaViaGAS() {
             }
         }
 
-        // 2. 軽量化したデータをGASへ送信
         const payload = {
             action: "createShare",
             gacha: compressedGacha
@@ -1273,7 +1216,6 @@ async function shareCurrentGachaViaGAS() {
 
         if (result.status === "success" && result.shareId) {
             const baseUrl = window.location.origin + window.location.pathname;
-            // 短いURLを発行！
             const shareUrl = `${baseUrl}?surprise=${result.shareId}`;
 
             const textarea = document.getElementById('share-url-textarea');
