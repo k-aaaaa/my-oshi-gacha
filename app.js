@@ -54,6 +54,7 @@ function escapeHTML(str) {
     return String(str || '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
+        .replace(/ formulation/g, '')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
 }
@@ -176,6 +177,43 @@ function renderGachaSelectors() {
             state.currentGachaId = e.target.value;
             saveLocal();
             renderAdminView();
+        };
+    }
+}
+
+// ------------------------------------------
+// 🔗 イベントリスナー一括登録 (関数宣言を上に配置)
+// ------------------------------------------
+function setupAppEventListeners() {
+    const btnShareGas = document.getElementById('btn-share-gacha-gas');
+    if (btnShareGas) {
+        btnShareGas.onclick = () => shareCurrentGachaViaGAS();
+    }
+
+    const btnCopyUrl = document.getElementById('btn-copy-share-url');
+    if (btnCopyUrl) {
+        btnCopyUrl.onclick = () => {
+            const textarea = document.getElementById('share-url-textarea');
+            if (textarea && textarea.value) {
+                textarea.select();
+                navigator.clipboard.writeText(textarea.value);
+                alert("📋 共有URLをクリップボードにコピーしました！");
+            }
+        };
+    }
+
+    const btnResetCol = document.getElementById('btn-reset-collection');
+    if (btnResetCol) {
+        btnResetCol.onclick = () => {
+            const selEl = document.getElementById('collection-gacha-selector');
+            if (!selEl) return;
+            const currentGachaId = selEl.value;
+            if (confirm("⚠️ このガチャの所持カード記録（図鑑）をリセットしますか？")) {
+                delete state.inventory[currentGachaId];
+                saveLocal();
+                renderCollection();
+                alert("✨ この図鑑の記録をリセットしました。");
+            }
         };
     }
 }
@@ -1233,39 +1271,5 @@ async function shareCurrentGachaViaGAS() {
             btnShare.innerText = "🔗 シェア";
             btnShare.disabled = false;
         }
-    }
-}
-
-function setupAppEventListeners() {
-    const btnShareGas = document.getElementById('btn-share-gacha-gas');
-    if (btnShareGas) {
-        btnShareGas.onclick = () => shareCurrentGachaViaGAS();
-    }
-
-    const btnCopyUrl = document.getElementById('btn-copy-share-url');
-    if (btnCopyUrl) {
-        btnCopyUrl.onclick = () => {
-            const textarea = document.getElementById('share-url-textarea');
-            if (textarea && textarea.value) {
-                textarea.select();
-                navigator.clipboard.writeText(textarea.value);
-                alert("📋 共有URLをクリップボードにコピーしました！");
-            }
-        };
-    }
-
-    const btnResetCol = document.getElementById('btn-reset-collection');
-    if (btnResetCol) {
-        btnResetCol.onclick = () => {
-            const selEl = document.getElementById('collection-gacha-selector');
-            if (!selEl) return;
-            const currentGachaId = selEl.value;
-            if (confirm("⚠️ このガチャの所持カード記録（図鑑）をリセットしますか？")) {
-                delete state.inventory[currentGachaId];
-                saveLocal();
-                renderCollection();
-                alert("✨ この図鑑の記録をリセットしました。");
-            }
-        };
     }
 }
